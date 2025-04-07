@@ -30,7 +30,7 @@ const questions = [
 ];
 
 export default function Quiz() {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(0); // ✅ 필수 선언!
   const [answers, setAnswers] = useState<string[]>([]);
 
   const handleSelect = (option: string) => {
@@ -49,7 +49,7 @@ export default function Quiz() {
           createdAt: serverTimestamp()
         });
         alert("응답이 저장되었습니다!");
-        window.location.href = "/result"; // 자동 이동
+        window.location.href = "/result";
       } catch (error) {
         alert("저장 실패 😥");
         console.error(error);
@@ -88,21 +88,3 @@ export default function Quiz() {
     </div>
   );
 }
-const next = async () => {
-  if (step < questions.length - 1) {
-    setStep(step + 1);
-  } else {
-    try {
-      console.log("📝 제출 직전 answers:", answers); // ✅ 이거 추가!
-      await addDoc(collection(db, "quizResponses"), {
-        answers,
-        createdAt: serverTimestamp()
-      });
-      alert("응답이 저장되었습니다!");
-      window.location.href = "/result";
-    } catch (error: any) {
-      alert("저장 실패 😥: " + error.message);
-      console.error("🔥 Firestore 저장 실패:", error);
-    }
-  }
-};
