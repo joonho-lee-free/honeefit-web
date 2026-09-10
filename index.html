@@ -212,7 +212,7 @@
     <div class="game-card" onclick="launchGame('nemo')">
       <div class="game-icon-wrapper">🐠</div>
       <div class="game-name">니모 탈출</div>
-      <div class="game-tag">플래피 버드 스타일</div>
+      <div class="game-tag">단계별 난이도 레벨업</div>
       <button class="game-play-btn">게임 시작 ▶</button>
     </div>
 
@@ -329,8 +329,8 @@
     radius: 18,
     hitRadius: 10,
     velocity: 0,
-    gravity: 0.18, // 살짝 빠른 리듬감을 위해 중력 조정 (0.15 -> 0.18)
-    jumpStrength: -4.0, // 보다 경쾌한 반응속도의 점프 (-3.6 -> -4.0)
+    gravity: 0.18,
+    jumpStrength: -4.0,
     angle: 0,
 
     draw() {
@@ -434,12 +434,17 @@
   class ObstacleColumn {
     constructor(level) {
       this.x = GAME_WIDTH + 20;
-      // 기둥 속도를 살짝 상향 조정 (Lv1: 1.5 ~ Lv4+: 2.1)
-      this.speedX = (isLandscape ? 1.7 : 1.35) + level * 0.18;
+      // 레벨이 올라갈수록 속도가 단계적으로 뚜렷하게 상승
+      // Lv1(초급): 1.35 | Lv2(중급): 1.75 | Lv3(상급): 2.2 | Lv4+(마스터): 2.65+
+      const speedStep = (level - 1) * 0.45;
+      this.speedX = (isLandscape ? 1.7 : 1.35) + speedStep;
       this.passed = false;
       
+      // 레벨이 올라갈수록 통과 구멍(Gap)이 단계적으로 좁아짐
+      // Lv1(초급): 225px | Lv2(중급): 198px | Lv3(상급): 171px | Lv4+(마스터): 144px
       const baseGap = isLandscape ? 165 : 225;
-      this.gapSize = Math.max(isLandscape ? 120 : 165, baseGap - level * 10);
+      const gapDecrease = (level - 1) * 27;
+      this.gapSize = Math.max(isLandscape ? 110 : 140, baseGap - gapDecrease);
       
       const minY = 40;
       const maxY = GAME_HEIGHT - this.gapSize - 40;
@@ -601,8 +606,8 @@
       } else if (gameState === 'PLAYING') {
         frames++;
 
-        // 리듬감을 높이기 위해 기둥 생성 간격 단축 (190 ~ 180)
-        const obstacleSpacing = Math.max(120, Math.floor((isLandscape ? 170 : 185) - lvlInfo.level * 8));
+        // 레벨별 장애물 등장 간격 단축 (Lv1: 185 -> Lv2: 162 -> Lv3: 139 -> Lv4+: 116)
+        const obstacleSpacing = Math.max(110, Math.floor((isLandscape ? 170 : 185) - (lvlInfo.level - 1) * 23));
 
         if (frames % obstacleSpacing === 0) {
           obstacles.push(new ObstacleColumn(lvlInfo.level));
@@ -677,10 +682,16 @@
       ctx.textAlign = 'center';
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
       ctx.shadowBlur = 8;
+
+      let subText = "속도가 상향되고 통과 구멍이 좁아집니다!";
+      if (lvlInfo.level === 2) subText = "속도 가속 & 통과 구멍 좁아짐!";
+      else if (lvlInfo.level === 3) subText = "고난도 해양 전류 & 스피드 업!";
+      else if (lvlInfo.level >= 4) subText = "최고난도 마스터 레벨 도전!";
+
       ctx.fillText(`LEVEL UP! LV.${lvlInfo.level} [${lvlInfo.title}]`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
       ctx.font = '14px sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`속도가 살짝 상승합니다!`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 22);
+      ctx.fillText(subText, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 22);
 
       ctx.restore();
     }
@@ -698,11 +709,11 @@
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("⚡ 스피드 업 & 경쾌한 리듬감 적용!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
+    ctx.fillText("🔥 10점마다 [초급➔중급➔상급➔마스터] 난이도 급상승!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
 
     ctx.fillStyle = 'rgba(200, 230, 255, 0.75)';
     ctx.font = '13px sans-serif';
-    ctx.fillText("스마트폰을 가로로 돌려 와이드 화면으로 즐기세요", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
+    ctx.fillText("레벨이 높아질수록 기둥 속도가 빠르고 좁아집니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
   }
 
   function drawUIGameOver(lvlInfo) {
