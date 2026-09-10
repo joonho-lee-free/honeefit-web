@@ -13,28 +13,30 @@
       -webkit-user-select: none;
       touch-action: manipulation;
     }
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
       background-color: #0b1d3a;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     #game-container {
       position: relative;
-      width: 100%;
-      max-width: 440px;
-      height: 100%;
-      max-height: 850px;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       overflow: hidden;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
     canvas {
+      display: block;
       width: 100%;
       height: 100%;
-      display: block;
+      object-fit: contain;
       background: linear-gradient(180deg, #1cb5e0 0%, #000851 100%);
     }
   </style>
@@ -49,10 +51,28 @@
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 
-  const GAME_WIDTH = 400;
-  const GAME_HEIGHT = 700;
-  canvas.width = GAME_WIDTH;
-  canvas.height = GAME_HEIGHT;
+  let GAME_WIDTH = 400;
+  let GAME_HEIGHT = 700;
+  let isLandscape = false;
+
+  function updateDimensions() {
+    isLandscape = window.innerWidth > window.innerHeight;
+    if (isLandscape) {
+      canvas.width = 800;
+      canvas.height = 450;
+    } else {
+      canvas.width = 400;
+      canvas.height = 700;
+    }
+    GAME_WIDTH = canvas.width;
+    GAME_HEIGHT = canvas.height;
+  }
+
+  window.addEventListener('resize', updateDimensions);
+  window.addEventListener('orientationchange', () => {
+    setTimeout(updateDimensions, 100);
+  });
+  updateDimensions();
 
   let gameState = 'START';
   let score = 0;
@@ -74,10 +94,10 @@
     x: 80,
     y: GAME_HEIGHT / 2,
     radius: 18,
-    hitRadius: 8, // 미니 피격 판정 (스쳐 지나가는 것은 모두 안전하게 통과)
+    hitRadius: 8,
     velocity: 0,
-    gravity: 0.15, // 무중력처럼 부드럽고 매우 천천히 하강
-    jumpStrength: -3.6, // 가볍고 안정적인 살포시 둥실 점프
+    gravity: 0.15,
+    jumpStrength: -3.6,
     angle: 0,
 
     draw() {
@@ -181,12 +201,15 @@
   class ObstacleColumn {
     constructor(level) {
       this.x = GAME_WIDTH + 20;
-      // 울트라 이지 이동 속도 (Lv1: 1.0 ~ Lv4+: 1.5)
-      this.speedX = 0.85 + level * 0.15;
+      this.speedX = (isLandscape ? 1.1 : 0.85) + level * 0.15;
       this.passed = false;
-      // 초대형 통과 공간 (Lv1: 230px ~ Lv4+: 180px)
-      this.gapSize = Math.max(180, 242 - level * 12);
-      this.gapY = Math.random() * (GAME_HEIGHT - this.gapSize - 180) + 90;
+      
+      const baseGap = isLandscape ? 170 : 242;
+      this.gapSize = Math.max(isLandscape ? 125 : 180, baseGap - level * 12);
+      
+      const minY = 40;
+      const maxY = GAME_HEIGHT - this.gapSize - 40;
+      this.gapY = Math.random() * Math.max(20, (maxY - minY)) + minY;
 
       this.bubbles = [];
       for (let i = 0; i < 18; i++) {
@@ -267,9 +290,9 @@
     }
   }
 
-  const bgParticles = Array.from({ length: 25 }, () => ({
-    x: Math.random() * GAME_WIDTH,
-    y: Math.random() * GAME_HEIGHT,
+  const bgParticles = Array.from({ length: 30 }, () => ({
+    x: Math.random() * 800,
+    y: Math.random() * 700,
     r: Math.random() * 3 + 1,
     speed: Math.random() * 0.8 + 0.3
   }));
@@ -337,8 +360,7 @@
     } else if (gameState === 'PLAYING') {
       frames++;
 
-      // 여유로운 기둥 등장 간격 (약 3.8초마다 1개 등장)
-      const obstacleSpacing = Math.max(150, Math.floor(230 - lvlInfo.level * 10));
+      const obstacleSpacing = Math.max(140, Math.floor((isLandscape ? 210 : 230) - lvlInfo.level * 10));
 
       if (frames % obstacleSpacing === 0) {
         obstacles.push(new ObstacleColumn(lvlInfo.level));
@@ -389,11 +411,11 @@
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 6;
-    ctx.fillText(score, GAME_WIDTH / 2, 70);
+    ctx.fillText(score, GAME_WIDTH / 2, isLandscape ? 50 : 70);
 
     ctx.font = 'bold 16px sans-serif';
     ctx.fillStyle = '#ffca28';
-    ctx.fillText(`LV.${lvlInfo.level} [${lvlInfo.title}]`, GAME_WIDTH / 2, 100);
+    ctx.fillText(`LV.${lvlInfo.level} [${lvlInfo.title}]`, GAME_WIDTH / 2, isLandscape ? 75 : 100);
     ctx.shadowBlur = 0;
   }
 
@@ -425,19 +447,19 @@
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 30px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText("니모의 버블 탈출", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90);
+    ctx.fillText("니모의 버블 탈출", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 60 : 90));
 
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#ffca28';
-    ctx.fillText("화면을 터치해서 헤엄치세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50);
+    ctx.fillText("화면을 터치해서 헤엄치세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 25 : 50));
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("✨ 울트라 이지 모드 적용 완료 ✨", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80);
+    ctx.fillText("📱 세로 / 🔄 가로 모드 자동 지원!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
 
     ctx.fillStyle = 'rgba(200, 230, 255, 0.7)';
     ctx.font = '13px sans-serif';
-    ctx.fillText("깃털 같은 부드러움 & 초대형 통과 공간", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 105);
+    ctx.fillText("스마트폰을 돌려 가로 화면으로 즐겨보세요", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
   }
 
   function drawUIGameOver(lvlInfo) {
@@ -447,16 +469,16 @@
     ctx.fillStyle = '#ff5252';
     ctx.font = 'bold 34px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText("GAME OVER", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60);
+    ctx.fillText("GAME OVER", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 45 : 60));
 
     ctx.fillStyle = '#ffffff';
     ctx.font = '20px sans-serif';
-    ctx.fillText(`최종 점수: ${score} (LV.${lvlInfo.level} ${lvlInfo.title})`, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10);
+    ctx.fillText(`최종 점수: ${score} (LV.${lvlInfo.level} ${lvlInfo.title})`, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 5);
     ctx.fillText(`최고 기록: ${highScore}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 25);
 
     ctx.fillStyle = '#ffeb3b';
     ctx.font = 'bold 16px sans-serif';
-    ctx.fillText("화면을 터치하여 다시 시작", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 85);
+    ctx.fillText("화면을 터치하여 다시 시작", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 65 : 85));
   }
 
   requestAnimationFrame(loop);
