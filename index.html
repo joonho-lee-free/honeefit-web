@@ -75,9 +75,10 @@
     x: 80,
     y: GAME_HEIGHT / 2,
     radius: 18,
+    hitRadius: 13, // 살짝 스쳐도 안 죽게 히트박스 완화
     velocity: 0,
-    gravity: 0.28,
-    jumpStrength: -5.5,
+    gravity: 0.22, // 중력을 낮춰서 부드럽고 천천히 하강
+    jumpStrength: -4.8, // 점프 조종을 더 쉽고 가볍게 조정
     angle: 0,
 
     draw() {
@@ -155,12 +156,12 @@
         this.angle = Math.min(0.5, this.velocity * 0.06);
       }
 
-      if (this.y + this.radius > GAME_HEIGHT) {
-        this.y = GAME_HEIGHT - this.radius;
+      if (this.y + this.hitRadius > GAME_HEIGHT) {
+        this.y = GAME_HEIGHT - this.hitRadius;
         gameOver();
       }
-      if (this.y - this.radius < 0) {
-        this.y = this.radius;
+      if (this.y - this.hitRadius < 0) {
+        this.y = this.hitRadius;
         this.velocity = 0;
       }
     },
@@ -181,11 +182,11 @@
   class ObstacleColumn {
     constructor(level) {
       this.x = GAME_WIDTH + 20;
-      // 난이도 상승: 레벨별 이동 속도 증가 (2.1 ~ 3.3+)
-      this.speedX = 1.8 + level * 0.3;
+      // 난이도 하향: 속도를 느리게 조절 (Lv1: 1.5 ~ Lv5+: 2.3)
+      this.speedX = 1.3 + level * 0.2;
       this.passed = false;
-      // 난이도 상승: 레벨별 갭 크기 감소 (156 ~ 105)
-      this.gapSize = Math.max(105, 165 - level * 9);
+      // 난이도 하향: 통과 구멍(Gap)을 훨씬 넉넉하게 확장 (Lv1: 185px ~ Lv5+: 145px)
+      this.gapSize = Math.max(140, 195 - level * 10);
       this.gapY = Math.random() * (GAME_HEIGHT - this.gapSize - 160) + 80;
 
       this.bubbles = [];
@@ -257,8 +258,9 @@
     }
 
     hits(fish) {
-      if (fish.x + fish.radius > this.x - 20 && fish.x - fish.radius < this.x + 20) {
-        if (fish.y - fish.radius < this.gapY || fish.y + fish.radius > this.gapY + this.gapSize) {
+      const hr = fish.hitRadius || fish.radius;
+      if (fish.x + hr > this.x - 18 && fish.x - hr < this.x + 18) {
+        if (fish.y - hr < this.gapY || fish.y + hr > this.gapY + this.gapSize) {
           return true;
         }
       }
@@ -336,8 +338,8 @@
     } else if (gameState === 'PLAYING') {
       frames++;
 
-      // 난이도 상승: 레벨별 기둥 생성 간격 조절
-      const obstacleSpacing = Math.max(90, Math.floor(145 - lvlInfo.level * 7));
+      // 난이도 하향: 기둥 간격을 훨씬 여유있게 조정
+      const obstacleSpacing = Math.max(120, Math.floor(180 - lvlInfo.level * 8));
 
       if (frames % obstacleSpacing === 0) {
         obstacles.push(new ObstacleColumn(lvlInfo.level));
@@ -359,7 +361,7 @@
           const newLvlInfo = getLevelInfo(score);
           if (newLvlInfo.level > lastLevel) {
             lastLevel = newLvlInfo.level;
-            levelNoticeTimer = 90; // 레벨업 알림 연출
+            levelNoticeTimer = 90;
           }
         }
 
@@ -390,7 +392,6 @@
     ctx.shadowBlur = 6;
     ctx.fillText(score, GAME_WIDTH / 2, 70);
 
-    // 레벨 및 난이도 표시
     ctx.font = 'bold 16px sans-serif';
     ctx.fillStyle = '#ffca28';
     ctx.fillText(`LV.${lvlInfo.level} [난이도: ${lvlInfo.title}]`, GAME_WIDTH / 2, 100);
@@ -415,7 +416,7 @@
       ctx.fillText(`LEVEL UP! LV.${lvlInfo.level} [${lvlInfo.title}]`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
       ctx.font = '14px sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`물방울 기둥이 더 빠르고 좁아집니다!`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 22);
+      ctx.fillText(`물방울 기둥 속도가 살짝 빨라집니다!`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 22);
 
       ctx.restore();
     }
@@ -433,11 +434,11 @@
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("10점마다 레벨 UP! (난이도: 하 ➔ 상)", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80);
+    ctx.fillText("초보자 모드: 10점마다 점진적 레벨 UP!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80);
 
     ctx.fillStyle = 'rgba(200, 230, 255, 0.7)';
     ctx.font = '13px sans-serif';
-    ctx.fillText("레벨이 높을수록 물방울 속도가 빠르고 좁아집니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 105);
+    ctx.fillText("부드러운 조작감 & 넉넉한 물방울 통과 구멍", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 105);
   }
 
   function drawUIGameOver(lvlInfo) {
