@@ -212,7 +212,7 @@
     <div class="game-card" onclick="launchGame('nemo')">
       <div class="game-icon-wrapper">🐠</div>
       <div class="game-name">니모 탈출</div>
-      <div class="game-tag">속도 가속 & 구멍 축소</div>
+      <div class="game-tag">균일 간격 & 단계별 가속</div>
       <button class="game-play-btn">게임 시작 ▶</button>
     </div>
 
@@ -434,13 +434,9 @@
   class ObstacleColumn {
     constructor(level) {
       this.x = GAME_WIDTH + 20;
-      
-      // 이동 속도 레벨별 가속 (초급: 1.35 | 중급: 1.88 | 상급: 2.41 | 마스터: 2.94)
-      const speedBoost = (level - 1) * 0.53;
-      this.speedX = (isLandscape ? 1.7 : 1.35) + speedBoost;
       this.passed = false;
       
-      // 통과 구멍(Gap)도 레벨업 될수록 조금씩 좁아짐! (Lv1: 225px -> Lv2: 205px -> Lv3: 185px -> Lv4+: 165px)
+      // 레벨업 시 통과 구멍(Gap) 크기 축소 (Lv1: 225px -> Lv2: 205px -> Lv3: 185px -> Lv4+: 165px)
       const baseGap = isLandscape ? 165 : 225;
       const gapDecrease = (level - 1) * 20;
       this.gapSize = Math.max(isLandscape ? 115 : 155, baseGap - gapDecrease);
@@ -464,8 +460,8 @@
       }
     }
 
-    update() {
-      this.x -= this.speedX;
+    update(speedX) {
+      this.x -= speedX;
       this.bubbles.forEach(b => {
         b.y -= b.speed;
         if (b.y < 0) b.y = GAME_HEIGHT;
@@ -605,21 +601,23 @@
       } else if (gameState === 'PLAYING') {
         frames++;
 
-        // 레벨별 이동 속도 계산
-        const speedBoost = (lvlInfo.level - 1) * 0.53;
+        // 현재 레벨 전체 장애물 이동 속도 (모든 장애물이 이 속도로 일률 이동)
+        const speedBoost = (lvlInfo.level - 1) * 0.50;
         const currentSpeed = (isLandscape ? 1.7 : 1.35) + speedBoost;
 
-        // 기둥 간의 '물리적 좌우 거리'를 항상 일정하게(260px) 고정 유지!
-        const TARGET_COLUMN_DISTANCE = isLandscape ? 250 : 260;
-        const obstacleSpacing = Math.max(70, Math.round(TARGET_COLUMN_DISTANCE / currentSpeed));
+        // 물리적 기둥 간 좌우 거리 완전 고정 (세로: 270px, 가로: 280px)
+        const TARGET_COLUMN_DISTANCE = isLandscape ? 280 : 270;
 
-        if (frames % obstacleSpacing === 0) {
+        // 이전 기둥과의 거리가 정확히 TARGET_COLUMN_DISTANCE 이상일 때만 새 기둥 생성
+        const lastObstacle = obstacles[obstacles.length - 1];
+        if (!lastObstacle || (GAME_WIDTH + 20 - lastObstacle.x) >= TARGET_COLUMN_DISTANCE) {
           obstacles.push(new ObstacleColumn(lvlInfo.level));
         }
 
         for (let i = obstacles.length - 1; i >= 0; i--) {
           const ob = obstacles[i];
-          ob.update();
+          // 모든 장애물이 현재 스피드로 일관되게 동시 이동 (속도 차로 인한 뭉침 현상 완벽 방지)
+          ob.update(currentSpeed);
           ob.draw();
 
           if (ob.hits(nemo)) {
@@ -637,7 +635,7 @@
             }
           }
 
-          if (ob.x < -40) {
+          if (ob.x < -50) {
             obstacles.splice(i, 1);
           }
         }
@@ -713,11 +711,11 @@
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("📏 10점마다 [속도 가속 + 구멍 축소] 난이도 UP!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
+    ctx.fillText("📏 기둥 간격(270px)은 정확히 고정되어 연속 생성 없음!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
 
     ctx.fillStyle = 'rgba(200, 230, 255, 0.75)';
     ctx.font = '13px sans-serif';
-    ctx.fillText("기둥 좌우 간격(260px)은 고정되며 레벨별 구멍이 슬림해집니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
+    ctx.fillText("레벨업 시 모든 기둥이 일관되게 가속하며 구멍이 좁아집니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
   }
 
   function drawUIGameOver(lvlInfo) {
