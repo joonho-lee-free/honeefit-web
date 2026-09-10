@@ -2,7 +2,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>니모의 물방울 탈출</title>
   <style>
     * {
@@ -16,6 +19,7 @@
     html, body {
       width: 100%;
       height: 100%;
+      height: 100dvh;
       background-color: #0b1d3a;
       display: flex;
       justify-content: center;
@@ -27,6 +31,7 @@
       position: relative;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -80,6 +85,17 @@
   let frames = 0;
   let levelNoticeTimer = 0;
   let lastLevel = 1;
+
+  function enableFullScreen() {
+    const docEl = document.documentElement;
+    const requestFS = docEl.requestFullscreen || 
+                      docEl.webkitRequestFullscreen || 
+                      docEl.mozRequestFullScreen || 
+                      docEl.msRequestFullscreen;
+    if (requestFS && !document.fullscreenElement && !document.webkitFullscreenElement) {
+      requestFS.call(docEl).catch(() => {});
+    }
+  }
 
   function getLevelInfo(s) {
     const lvl = Math.floor(s / 10) + 1;
@@ -312,6 +328,7 @@
   }
 
   function handleAction() {
+    enableFullScreen();
     if (gameState === 'START') {
       gameState = 'PLAYING';
       nemo.flap();
@@ -451,15 +468,15 @@
 
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#ffca28';
-    ctx.fillText("화면을 터치해서 헤엄치세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 25 : 50));
+    ctx.fillText("화면을 터치해서 시작하세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 25 : 50));
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("📱 세로 / 🔄 가로 모드 자동 지원!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
+    ctx.fillText("📱 터치 시 주소창 자동 숨김 & 몰입 전체화면 전환", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
 
-    ctx.fillStyle = 'rgba(200, 230, 255, 0.7)';
+    ctx.fillStyle = 'rgba(200, 230, 255, 0.75)';
     ctx.font = '13px sans-serif';
-    ctx.fillText("스마트폰을 돌려 가로 화면으로 즐겨보세요", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
+    ctx.fillText("스마트폰을 가로로 돌리면 와이드 전체화면으로 즐길 수 있습니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
   }
 
   function drawUIGameOver(lvlInfo) {
