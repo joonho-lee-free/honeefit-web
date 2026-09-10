@@ -6,7 +6,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>니모의 물방울 탈출</title>
+  <title>허니핏 아케이드 - 미니게임 포털</title>
   <style>
     * {
       box-sizing: border-box;
@@ -21,22 +21,150 @@
       height: 100%;
       height: 100dvh;
       background-color: #0b1d3a;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    /* 포털 메인 화면 스타일 */
+    #portal-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px;
+      overflow-y: auto;
+      background: radial-gradient(circle at center top, #1a3a68 0%, #0b1d3a 80%);
+    }
+
+    .portal-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .portal-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #4fc3f7;
+      text-shadow: 0 2px 12px rgba(79, 195, 247, 0.4);
+      margin-bottom: 6px;
+    }
+
+    .portal-subtitle {
+      font-size: 14px;
+      color: #b0bec5;
+    }
+
+    .game-grid {
+      width: 100%;
+      max-width: 440px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 16px;
+      padding-bottom: 30px;
+    }
+
+    .game-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-card:hover, .game-card:active {
+      transform: translateY(-4px) scale(1.02);
+      border-color: #ffb74d;
+      background: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 10px 24px rgba(255, 183, 77, 0.3);
+    }
+
+    .game-icon-wrapper {
+      width: 76px;
+      height: 76px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #ff7043 0%, #ff9800 100%);
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 38px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(255, 112, 67, 0.4);
     }
+
+    .game-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .game-tag {
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 3px 8px;
+      border-radius: 10px;
+      color: #ffecb3;
+      margin-bottom: 12px;
+    }
+
+    .game-play-btn {
+      width: 100%;
+      padding: 9px 0;
+      background: #ff9800;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 13px;
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 3px 8px rgba(255, 152, 0, 0.4);
+      pointer-events: none;
+    }
+
+    /* 준비중 카드 */
+    .game-card.disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .game-card.disabled:hover, .game-card.disabled:active {
+      transform: none;
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .disabled .game-icon-wrapper {
+      background: linear-gradient(135deg, #546e7a 0%, #37474f 100%);
+      box-shadow: none;
+    }
+
+    .disabled .game-play-btn {
+      background: #546e7a;
+      box-shadow: none;
+    }
+
+    /* 게임 캔버스 화면 Container */
     #game-container {
-      position: relative;
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
       height: 100dvh;
-      display: flex;
+      display: none;
       justify-content: center;
       align-items: center;
       overflow: hidden;
     }
+
     canvas {
       display: block;
       width: 100%;
@@ -44,11 +172,71 @@
       object-fit: contain;
       background: linear-gradient(180deg, #1cb5e0 0%, #000851 100%);
     }
+
+    #back-home-btn {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.55);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    #back-home-btn:active {
+      background: rgba(255, 255, 255, 0.3);
+    }
   </style>
 </head>
 <body>
 
+<!-- 아케이드 메인 포털 -->
+<div id="portal-container">
+  <div class="portal-header">
+    <div class="portal-title">🎮 허니핏 아케이드</div>
+    <div class="portal-subtitle">원하는 미니게임을 선택해 플레이하세요!</div>
+  </div>
+
+  <div class="game-grid">
+    <!-- 니모 탈출 카드 아이콘 -->
+    <div class="game-card" onclick="launchGame('nemo')">
+      <div class="game-icon-wrapper">🐠</div>
+      <div class="game-name">니모 탈출</div>
+      <div class="game-tag">플래피 버드 스타일</div>
+      <button class="game-play-btn">게임 시작 ▶</button>
+    </div>
+
+    <!-- 예정 게임 1 -->
+    <div class="game-card disabled">
+      <div class="game-icon-wrapper">🧩</div>
+      <div class="game-name">퍼즐 블록</div>
+      <div class="game-tag">COMING SOON</div>
+      <button class="game-play-btn">준비 중</button>
+    </div>
+
+    <!-- 예정 게임 2 -->
+    <div class="game-card disabled">
+      <div class="game-icon-wrapper">🚀</div>
+      <div class="game-name">우주 슈팅</div>
+      <div class="game-tag">COMING SOON</div>
+      <button class="game-play-btn">준비 중</button>
+    </div>
+  </div>
+</div>
+
+<!-- 게임 실행 화면 -->
 <div id="game-container">
+  <button id="back-home-btn" onclick="exitToMenu(event)">🏠 메뉴로</button>
   <canvas id="gameCanvas"></canvas>
 </div>
 
@@ -59,6 +247,7 @@
   let GAME_WIDTH = 400;
   let GAME_HEIGHT = 700;
   let isLandscape = false;
+  let currentAppMode = 'MENU'; // 'MENU' or 'GAME'
 
   function updateDimensions() {
     isLandscape = window.innerWidth > window.innerHeight;
@@ -79,13 +268,6 @@
   });
   updateDimensions();
 
-  let gameState = 'START';
-  let score = 0;
-  let highScore = localStorage.getItem('nemo_highscore') || 0;
-  let frames = 0;
-  let levelNoticeTimer = 0;
-  let lastLevel = 1;
-
   function enableFullScreen() {
     const docEl = document.documentElement;
     const requestFS = docEl.requestFullscreen || 
@@ -96,6 +278,41 @@
       requestFS.call(docEl).catch(() => {});
     }
   }
+
+  function launchGame(gameId) {
+    if (gameId === 'nemo') {
+      currentAppMode = 'GAME';
+      document.getElementById('portal-container').style.display = 'none';
+      document.getElementById('game-container').style.display = 'flex';
+      
+      enableFullScreen();
+      updateDimensions();
+
+      // 니모 게임 리셋
+      obstacles.length = 0;
+      score = 0;
+      frames = 0;
+      lastLevel = 1;
+      levelNoticeTimer = 0;
+      nemo.reset();
+      gameState = 'START';
+    }
+  }
+
+  function exitToMenu(e) {
+    if (e) e.stopPropagation();
+    currentAppMode = 'MENU';
+    gameState = 'MENU';
+    document.getElementById('game-container').style.display = 'none';
+    document.getElementById('portal-container').style.display = 'flex';
+  }
+
+  let gameState = 'MENU';
+  let score = 0;
+  let highScore = localStorage.getItem('nemo_highscore') || 0;
+  let frames = 0;
+  let levelNoticeTimer = 0;
+  let lastLevel = 1;
 
   function getLevelInfo(s) {
     const lvl = Math.floor(s / 10) + 1;
@@ -327,7 +544,10 @@
     });
   }
 
-  function handleAction() {
+  function handleAction(e) {
+    if (e && e.target && e.target.closest('#back-home-btn')) return;
+    if (currentAppMode !== 'GAME') return;
+
     enableFullScreen();
     if (gameState === 'START') {
       gameState = 'PLAYING';
@@ -347,13 +567,15 @@
   }
 
   window.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    handleAction();
+    if (currentAppMode === 'GAME') {
+      e.preventDefault();
+      handleAction(e);
+    }
   }, { passive: false });
 
   window.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
-      handleAction();
+    if (e.code === 'Space' && currentAppMode === 'GAME') {
+      handleAction(e);
     }
   });
 
@@ -366,57 +588,59 @@
   }
 
   function loop() {
-    ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    updateBackground();
+    if (currentAppMode === 'GAME') {
+      ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+      updateBackground();
 
-    const lvlInfo = getLevelInfo(score);
+      const lvlInfo = getLevelInfo(score);
 
-    if (gameState === 'START') {
-      nemo.draw();
-      drawUIStart();
-    } else if (gameState === 'PLAYING') {
-      frames++;
+      if (gameState === 'START') {
+        nemo.draw();
+        drawUIStart();
+      } else if (gameState === 'PLAYING') {
+        frames++;
 
-      const obstacleSpacing = Math.max(140, Math.floor((isLandscape ? 210 : 230) - lvlInfo.level * 10));
+        const obstacleSpacing = Math.max(140, Math.floor((isLandscape ? 210 : 230) - lvlInfo.level * 10));
 
-      if (frames % obstacleSpacing === 0) {
-        obstacles.push(new ObstacleColumn(lvlInfo.level));
-      }
-
-      for (let i = obstacles.length - 1; i >= 0; i--) {
-        const ob = obstacles[i];
-        ob.update();
-        ob.draw();
-
-        if (ob.hits(nemo)) {
-          gameOver();
+        if (frames % obstacleSpacing === 0) {
+          obstacles.push(new ObstacleColumn(lvlInfo.level));
         }
 
-        if (!ob.passed && ob.x < nemo.x) {
-          ob.passed = true;
-          score++;
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const ob = obstacles[i];
+          ob.update();
+          ob.draw();
 
-          const newLvlInfo = getLevelInfo(score);
-          if (newLvlInfo.level > lastLevel) {
-            lastLevel = newLvlInfo.level;
-            levelNoticeTimer = 90;
+          if (ob.hits(nemo)) {
+            gameOver();
+          }
+
+          if (!ob.passed && ob.x < nemo.x) {
+            ob.passed = true;
+            score++;
+
+            const newLvlInfo = getLevelInfo(score);
+            if (newLvlInfo.level > lastLevel) {
+              lastLevel = newLvlInfo.level;
+              levelNoticeTimer = 90;
+            }
+          }
+
+          if (ob.x < -40) {
+            obstacles.splice(i, 1);
           }
         }
 
-        if (ob.x < -40) {
-          obstacles.splice(i, 1);
-        }
+        nemo.update();
+        nemo.draw();
+        drawScore(lvlInfo);
+        drawLevelNotice(lvlInfo);
+
+      } else if (gameState === 'GAMEOVER') {
+        obstacles.forEach(ob => ob.draw());
+        nemo.draw();
+        drawUIGameOver(lvlInfo);
       }
-
-      nemo.update();
-      nemo.draw();
-      drawScore(lvlInfo);
-      drawLevelNotice(lvlInfo);
-
-    } else if (gameState === 'GAMEOVER') {
-      obstacles.forEach(ob => ob.draw());
-      nemo.draw();
-      drawUIGameOver(lvlInfo);
     }
 
     requestAnimationFrame(loop);
@@ -472,11 +696,11 @@
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("📱 터치 시 주소창 자동 숨김 & 몰입 전체화면 전환", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
+    ctx.fillText("📱 터치 시 몰입 전체화면 전환", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
 
     ctx.fillStyle = 'rgba(200, 230, 255, 0.75)';
     ctx.font = '13px sans-serif';
-    ctx.fillText("스마트폰을 가로로 돌리면 와이드 전체화면으로 즐길 수 있습니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
+    ctx.fillText("스마트폰을 가로로 돌려 와이드 화면으로 즐기세요", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
   }
 
   function drawUIGameOver(lvlInfo) {
