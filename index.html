@@ -212,7 +212,7 @@
     <div class="game-card" onclick="launchGame('nemo')">
       <div class="game-icon-wrapper">🐠</div>
       <div class="game-name">니모 탈출</div>
-      <div class="game-tag">단계별 속도 가속</div>
+      <div class="game-tag">일정 간격 & 단계별 가속</div>
       <button class="game-play-btn">게임 시작 ▶</button>
     </div>
 
@@ -435,13 +435,12 @@
     constructor(level) {
       this.x = GAME_WIDTH + 20;
       
-      // 구멍 크기는 여유롭게 유지하되, '속도만' 단계적으로 빠르게 상승!
-      // 초급(Lv1): 1.35 | 중급(Lv2): 1.88 | 상급(Lv3): 2.41 | 마스터(Lv4+): 2.94+
+      // 이동 속도만 레벨별로 가속 (초급: 1.35 | 중급: 1.88 | 상급: 2.41 | 마스터: 2.94)
       const speedBoost = (level - 1) * 0.53;
       this.speedX = (isLandscape ? 1.7 : 1.35) + speedBoost;
       this.passed = false;
       
-      // 통과 구멍(Gap) 크기는 편안하고 안전하게 유지
+      // 통과 구멍(Gap) 크기는 편안하게 고정 유지
       this.gapSize = isLandscape ? 165 : 225;
       
       const minY = 40;
@@ -604,8 +603,13 @@
       } else if (gameState === 'PLAYING') {
         frames++;
 
-        // 속도가 빨라지므로 간격도 조율 (Lv1: 185 -> Lv2: 165 -> Lv3: 145 -> Lv4+: 125)
-        const obstacleSpacing = Math.max(120, Math.floor((isLandscape ? 170 : 185) - (lvlInfo.level - 1) * 20));
+        // 레벨별 이동 속도 계산
+        const speedBoost = (lvlInfo.level - 1) * 0.53;
+        const currentSpeed = (isLandscape ? 1.7 : 1.35) + speedBoost;
+
+        // 기둥 간의 '물리적 좌우 거리'를 항상 일정하게(260px) 고정 유지!
+        const TARGET_COLUMN_DISTANCE = isLandscape ? 250 : 260;
+        const obstacleSpacing = Math.max(70, Math.round(TARGET_COLUMN_DISTANCE / currentSpeed));
 
         if (frames % obstacleSpacing === 0) {
           obstacles.push(new ObstacleColumn(lvlInfo.level));
@@ -682,9 +686,9 @@
       ctx.shadowBlur = 8;
 
       let subText = "이동 속도가 상승합니다!";
-      if (lvlInfo.level === 2) subText = "이동 속도 가속! (스피드 업)";
-      else if (lvlInfo.level === 3) subText = "상급 해양 전류! (속도 추가 상승)";
-      else if (lvlInfo.level >= 4) subText = "마스터 스피드! (최대 속도 달성)";
+      if (lvlInfo.level === 2) subText = "중급 스피드 가속! (기둥 간격 고정)";
+      else if (lvlInfo.level === 3) subText = "상급 스피드 가속!";
+      else if (lvlInfo.level >= 4) subText = "마스터 최저속도 도전!";
 
       ctx.fillText(`LEVEL UP! LV.${lvlInfo.level} [${lvlInfo.title}]`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
       ctx.font = '14px sans-serif';
@@ -707,11 +711,11 @@
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("⚡ 10점마다 단계별 [속도만] 전용 가속!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
+    ctx.fillText("📏 기둥 간격 고정 & 레벨별 [속도만] 가속!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
 
     ctx.fillStyle = 'rgba(200, 230, 255, 0.75)';
     ctx.font = '13px sans-serif';
-    ctx.fillText("통과 구멍은 안전하게 유지되며 이동 속도만 점진적으로 상승합니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
+    ctx.fillText("기둥 사이 간격과 통과 구멍은 일정하게 고정됩니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
   }
 
   function drawUIGameOver(lvlInfo) {
