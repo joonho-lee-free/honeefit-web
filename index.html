@@ -212,7 +212,7 @@
     <div class="game-card" onclick="launchGame('nemo')">
       <div class="game-icon-wrapper">🐠</div>
       <div class="game-name">니모 탈출</div>
-      <div class="game-tag">일정 간격 & 단계별 가속</div>
+      <div class="game-tag">속도 가속 & 구멍 축소</div>
       <button class="game-play-btn">게임 시작 ▶</button>
     </div>
 
@@ -435,13 +435,15 @@
     constructor(level) {
       this.x = GAME_WIDTH + 20;
       
-      // 이동 속도만 레벨별로 가속 (초급: 1.35 | 중급: 1.88 | 상급: 2.41 | 마스터: 2.94)
+      // 이동 속도 레벨별 가속 (초급: 1.35 | 중급: 1.88 | 상급: 2.41 | 마스터: 2.94)
       const speedBoost = (level - 1) * 0.53;
       this.speedX = (isLandscape ? 1.7 : 1.35) + speedBoost;
       this.passed = false;
       
-      // 통과 구멍(Gap) 크기는 편안하게 고정 유지
-      this.gapSize = isLandscape ? 165 : 225;
+      // 통과 구멍(Gap)도 레벨업 될수록 조금씩 좁아짐! (Lv1: 225px -> Lv2: 205px -> Lv3: 185px -> Lv4+: 165px)
+      const baseGap = isLandscape ? 165 : 225;
+      const gapDecrease = (level - 1) * 20;
+      this.gapSize = Math.max(isLandscape ? 115 : 155, baseGap - gapDecrease);
       
       const minY = 40;
       const maxY = GAME_HEIGHT - this.gapSize - 40;
@@ -685,10 +687,10 @@
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
       ctx.shadowBlur = 8;
 
-      let subText = "이동 속도가 상승합니다!";
-      if (lvlInfo.level === 2) subText = "중급 스피드 가속! (기둥 간격 고정)";
-      else if (lvlInfo.level === 3) subText = "상급 스피드 가속!";
-      else if (lvlInfo.level >= 4) subText = "마스터 최저속도 도전!";
+      let subText = "속도가 가속되고 통과 구멍이 좁아집니다!";
+      if (lvlInfo.level === 2) subText = "중급 진입! 속도 가속 & 구멍 축소 (-20px)";
+      else if (lvlInfo.level === 3) subText = "상급 진입! 속도 추가 가속 & 구멍 축소!";
+      else if (lvlInfo.level >= 4) subText = "마스터 진입! 고난도 연속 도전!";
 
       ctx.fillText(`LEVEL UP! LV.${lvlInfo.level} [${lvlInfo.title}]`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
       ctx.font = '14px sans-serif';
@@ -711,11 +713,11 @@
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("📏 기둥 간격 고정 & 레벨별 [속도만] 가속!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
+    ctx.fillText("📏 10점마다 [속도 가속 + 구멍 축소] 난이도 UP!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
 
     ctx.fillStyle = 'rgba(200, 230, 255, 0.75)';
     ctx.font = '13px sans-serif';
-    ctx.fillText("기둥 사이 간격과 통과 구멍은 일정하게 고정됩니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
+    ctx.fillText("기둥 좌우 간격(260px)은 고정되며 레벨별 구멍이 슬림해집니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
   }
 
   function drawUIGameOver(lvlInfo) {
