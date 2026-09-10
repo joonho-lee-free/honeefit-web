@@ -58,6 +58,18 @@
   let score = 0;
   let highScore = localStorage.getItem('nemo_highscore') || 0;
   let frames = 0;
+  let levelNoticeTimer = 0;
+  let lastLevel = 1;
+
+  function getLevelInfo(s) {
+    const lvl = Math.floor(s / 10) + 1;
+    let title = '하';
+    if (lvl === 2) title = '중하';
+    else if (lvl === 3) title = '중';
+    else if (lvl === 4) title = '중상';
+    else if (lvl >= 5) title = '상';
+    return { level: lvl, title: title };
+  }
 
   const nemo = {
     x: 80,
@@ -165,14 +177,15 @@
   };
 
   const obstacles = [];
-  const obstacleSpacing = 130;
 
   class ObstacleColumn {
-    constructor() {
+    constructor(level) {
       this.x = GAME_WIDTH + 20;
-      this.speedX = 2.4;
+      // 난이도 상승: 레벨별 이동 속도 증가 (2.1 ~ 3.3+)
+      this.speedX = 1.8 + level * 0.3;
       this.passed = false;
-      this.gapSize = 135;
+      // 난이도 상승: 레벨별 갭 크기 감소 (156 ~ 105)
+      this.gapSize = Math.max(105, 165 - level * 9);
       this.gapY = Math.random() * (GAME_HEIGHT - this.gapSize - 160) + 80;
 
       this.bubbles = [];
@@ -284,6 +297,8 @@
       obstacles.length = 0;
       score = 0;
       frames = 0;
+      lastLevel = 1;
+      levelNoticeTimer = 0;
       nemo.reset();
       gameState = 'PLAYING';
       nemo.flap();
@@ -313,14 +328,19 @@
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     updateBackground();
 
+    const lvlInfo = getLevelInfo(score);
+
     if (gameState === 'START') {
       nemo.draw();
       drawUIStart();
     } else if (gameState === 'PLAYING') {
       frames++;
 
+      // 난이도 상승: 레벨별 기둥 생성 간격 조절
+      const obstacleSpacing = Math.max(90, Math.floor(145 - lvlInfo.level * 7));
+
       if (frames % obstacleSpacing === 0) {
-        obstacles.push(new ObstacleColumn());
+        obstacles.push(new ObstacleColumn(lvlInfo.level));
       }
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -335,6 +355,12 @@
         if (!ob.passed && ob.x < nemo.x) {
           ob.passed = true;
           score++;
+
+          const newLvlInfo = getLevelInfo(score);
+          if (newLvlInfo.level > lastLevel) {
+            lastLevel = newLvlInfo.level;
+            levelNoticeTimer = 90; // 레벨업 알림 연출
+          }
         }
 
         if (ob.x < -40) {
@@ -344,59 +370,93 @@
 
       nemo.update();
       nemo.draw();
-      drawScore();
+      drawScore(lvlInfo);
+      drawLevelNotice(lvlInfo);
 
     } else if (gameState === 'GAMEOVER') {
       obstacles.forEach(ob => ob.draw());
       nemo.draw();
-      drawUIGameOver();
+      drawUIGameOver(lvlInfo);
     }
 
     requestAnimationFrame(loop);
   }
 
-  function drawScore() {
+  function drawScore(lvlInfo) {
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 36px sans-serif';
+    ctx.font = 'bold 38px sans-serif';
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 6;
-    ctx.fillText(score, GAME_WIDTH / 2, 80);
+    ctx.fillText(score, GAME_WIDTH / 2, 70);
+
+    // 레벨 및 난이도 표시
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillStyle = '#ffca28';
+    ctx.fillText(`LV.${lvlInfo.level} [난이도: ${lvlInfo.title}]`, GAME_WIDTH / 2, 100);
     ctx.shadowBlur = 0;
+  }
+
+  function drawLevelNotice(lvlInfo) {
+    if (levelNoticeTimer > 0) {
+      levelNoticeTimer--;
+      const alpha = Math.min(1, levelNoticeTimer / 30);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      ctx.fillStyle = 'rgba(255, 193, 7, 0.25)';
+      ctx.fillRect(0, GAME_HEIGHT / 2 - 40, GAME_WIDTH, 70);
+
+      ctx.fillStyle = '#ffeb3b';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 8;
+      ctx.fillText(`LEVEL UP! LV.${lvlInfo.level} [${lvlInfo.title}]`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
+      ctx.font = '14px sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(`물방울 기둥이 더 빠르고 좁아집니다!`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 22);
+
+      ctx.restore();
+    }
   }
 
   function drawUIStart() {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 30px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText("니모의 버블 탈출", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80);
+    ctx.fillText("니모의 버블 탈출", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90);
 
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#ffca28';
-    ctx.fillText("화면을 터치해서 헤엄치세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+    ctx.fillText("화면을 터치해서 헤엄치세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50);
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("떠오르는 물방울 기둥을 피하세요", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 100);
+    ctx.fillText("10점마다 레벨 UP! (난이도: 하 ➔ 상)", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80);
+
+    ctx.fillStyle = 'rgba(200, 230, 255, 0.7)';
+    ctx.font = '13px sans-serif';
+    ctx.fillText("레벨이 높을수록 물방울 속도가 빠르고 좁아집니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 105);
   }
 
-  function drawUIGameOver() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+  function drawUIGameOver(lvlInfo) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     ctx.fillStyle = '#ff5252';
     ctx.font = 'bold 34px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText("GAME OVER", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50);
+    ctx.fillText("GAME OVER", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = '20px sans-serif';
-    ctx.fillText(`현재 점수: ${score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
-    ctx.fillText(`최고 기록: ${highScore}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 35);
+    ctx.fillText(`최종 점수: ${score} (LV.${lvlInfo.level} ${lvlInfo.title})`, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10);
+    ctx.fillText(`최고 기록: ${highScore}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 25);
 
     ctx.fillStyle = '#ffeb3b';
     ctx.font = 'bold 16px sans-serif';
-    ctx.fillText("화면을 터치하여 다시 시작", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90);
+    ctx.fillText("화면을 터치하여 다시 시작", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 85);
   }
 
   requestAnimationFrame(loop);
