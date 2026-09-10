@@ -49,19 +49,16 @@
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 
-  // 반응형 해상도 설정 (내부 해상도 400x700 고정)
   const GAME_WIDTH = 400;
   const GAME_HEIGHT = 700;
   canvas.width = GAME_WIDTH;
   canvas.height = GAME_HEIGHT;
 
-  // 게임 상태: 'START', 'PLAYING', 'GAMEOVER'
   let gameState = 'START';
   let score = 0;
   let highScore = localStorage.getItem('nemo_highscore') || 0;
   let frames = 0;
 
-  // 물고기(니모) 객체
   const nemo = {
     x: 80,
     y: GAME_HEIGHT / 2,
@@ -76,7 +73,6 @@
       ctx.translate(this.x, this.y);
       ctx.rotate(this.angle);
 
-      // 꼬리지느러미 흔들림
       const tailWiggle = Math.sin(frames * 0.25) * 4;
 
       // 꼬리
@@ -89,25 +85,24 @@
       ctx.closePath();
       ctx.fill();
 
-      // 꼬리 흰 줄무늬 & 검은 테두리
       ctx.strokeStyle = '#222';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // 몸통 (주황색 타원)
+      // 몸통
       ctx.fillStyle = '#ff6d00';
       ctx.beginPath();
       ctx.ellipse(0, 0, 22, 16, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      // 흰색 줄무늬 1
+      // 줄무늬 1
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.ellipse(-4, 0, 4.5, 14.5, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 흰색 줄무늬 2 (가운데 큰 줄무늬)
+      // 줄무늬 2
       ctx.beginPath();
       ctx.ellipse(7, 0, 4, 15, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -118,13 +113,11 @@
       ctx.arc(12, -4, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      // 눈동자
       ctx.fillStyle = '#000000';
       ctx.beginPath();
       ctx.arc(14, -4, 2.5, 0, Math.PI * 2);
       ctx.fill();
 
-      // 눈 하이라이트
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(15, -5, 1, 0, Math.PI * 2);
@@ -144,14 +137,12 @@
       this.velocity += this.gravity;
       this.y += this.velocity;
 
-      // 회전 각도 조절
       if (this.velocity < 0) {
         this.angle = Math.max(-0.4, this.velocity * 0.08);
       } else {
         this.angle = Math.min(0.5, this.velocity * 0.06);
       }
 
-      // 화면 바닥/천장 충돌 체크
       if (this.y + this.radius > GAME_HEIGHT) {
         this.y = GAME_HEIGHT - this.radius;
         gameOver();
@@ -173,22 +164,17 @@
     }
   };
 
-  // 장애물 (아래에서 위로 떠오르는 버블 기둥)
   const obstacles = [];
-  const obstacleSpacing = 130; // 장애물 생성 주기 (프레임)
+  const obstacleSpacing = 130;
 
   class ObstacleColumn {
     constructor() {
       this.x = GAME_WIDTH + 20;
-      this.speedX = 2.4; // 왼쪽으로 이동하는 속도
-      this.speedY = 1.6; // 위로 떠오르는 속도
+      this.speedX = 2.4;
       this.passed = false;
-
-      // 안전 통과 구역(Gap)의 Y 좌표와 높이
       this.gapSize = 135;
       this.gapY = Math.random() * (GAME_HEIGHT - this.gapSize - 160) + 80;
 
-      // 물방울 입자 효과들
       this.bubbles = [];
       for (let i = 0; i < 18; i++) {
         const isUpper = Math.random() < 0.5;
@@ -206,7 +192,6 @@
 
     update() {
       this.x -= this.speedX;
-      // 물방울 개별 상승 애니메이션
       this.bubbles.forEach(b => {
         b.y -= b.speed;
         if (b.y < 0) b.y = GAME_HEIGHT;
@@ -215,13 +200,9 @@
 
     draw() {
       ctx.save();
-      // 위쪽 버블 장벽 기둥
       this.drawBubbleStream(0, this.gapY);
-
-      // 아래쪽 버블 장벽 기둥
       this.drawBubbleStream(this.gapY + this.gapSize, GAME_HEIGHT);
 
-      // 떠오르는 물방울 디테일 그리기
       this.bubbles.forEach(b => {
         ctx.beginPath();
         ctx.arc(this.x + b.relX, b.y, b.r, 0, Math.PI * 2);
@@ -231,7 +212,6 @@
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // 방울 하이라이트
         ctx.beginPath();
         ctx.arc(this.x + b.relX - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
@@ -253,7 +233,6 @@
       ctx.fillStyle = grad;
       ctx.fillRect(this.x - 22, top, 44, height);
 
-      // 경계선 물결 느낌
       ctx.strokeStyle = 'rgba(200, 240, 255, 0.3)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -265,9 +244,7 @@
     }
 
     hits(fish) {
-      // 가로 영역 안으로 들어왔을 때
       if (fish.x + fish.radius > this.x - 20 && fish.x - fish.radius < this.x + 20) {
-        // Gap 범위를 벗어나면 충돌
         if (fish.y - fish.radius < this.gapY || fish.y + fish.radius > this.gapY + this.gapSize) {
           return true;
         }
@@ -276,7 +253,6 @@
     }
   }
 
-  // 배경 부유 입자들
   const bgParticles = Array.from({ length: 25 }, () => ({
     x: Math.random() * GAME_WIDTH,
     y: Math.random() * GAME_HEIGHT,
@@ -305,7 +281,6 @@
     } else if (gameState === 'PLAYING') {
       nemo.flap();
     } else if (gameState === 'GAMEOVER') {
-      // 재시작
       obstacles.length = 0;
       score = 0;
       frames = 0;
@@ -315,7 +290,6 @@
     }
   }
 
-  // 터치 & 마우스 클릭 이벤트 등록
   window.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     handleAction();
@@ -335,11 +309,8 @@
     }
   }
 
-  // 메인 게임 루프
   function loop() {
     ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-    // 배경 물방울 효과
     updateBackground();
 
     if (gameState === 'START') {
@@ -348,12 +319,10 @@
     } else if (gameState === 'PLAYING') {
       frames++;
 
-      // 장애물 생성
       if (frames % obstacleSpacing === 0) {
         obstacles.push(new ObstacleColumn());
       }
 
-      // 장애물 업데이트 및 판정
       for (let i = obstacles.length - 1; i >= 0; i--) {
         const ob = obstacles[i];
         ob.update();
@@ -363,13 +332,11 @@
           gameOver();
         }
 
-        // 점수 획득
         if (!ob.passed && ob.x < nemo.x) {
           ob.passed = true;
           score++;
         }
 
-        // 화면 밖으로 나간 장애물 제거
         if (ob.x < -40) {
           obstacles.splice(i, 1);
         }
@@ -380,7 +347,6 @@
       drawScore();
 
     } else if (gameState === 'GAMEOVER') {
-      // 정지된 장애물들 유지
       obstacles.forEach(ob => ob.draw());
       nemo.draw();
       drawUIGameOver();
