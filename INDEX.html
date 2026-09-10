@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>니모의 물방울 탈출</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      background-color: #0b1d3a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #game-container {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      height: 100%;
+      max-height: 850px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: linear-gradient(180deg, #1cb5e0 0%, #000851 100%);
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="gameCanvas"></canvas>
+</div>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // 반응형 해상도 설정 (내부 해상도 400x700 고정)
+  const GAME_WIDTH = 400;
+  const GAME_HEIGHT = 700;
+  canvas.width = GAME_WIDTH;
+  canvas.height = GAME_HEIGHT;
+
+  // 게임 상태: 'START', 'PLAYING', 'GAMEOVER'
+  let gameState = 'START';
+  let score = 0;
+  let highScore = localStorage.getItem('nemo_highscore') || 0;
+  let frames = 0;
+
+  // 물고기(니모) 객체
+  const nemo = {
+    x: 80,
+    y: GAME_HEIGHT / 2,
+    radius: 18,
+    velocity: 0,
+    gravity: 0.28,
+    jumpStrength: -5.5,
+    angle: 0,
+
+    draw() {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.angle);
+
+      // 꼬리지느러미 흔들림
+      const tailWiggle = Math.sin(frames * 0.25) * 4;
+
+      // 꼬리
+      ctx.fillStyle = '#ff5722';
+      ctx.beginPath();
+      ctx.moveTo(-15, 0);
+      ctx.lineTo(-28, -12 + tailWiggle);
+      ctx.lineTo(-24, 0);
+      ctx.lineTo(-28, 12 + tailWiggle);
+      ctx.closePath();
+      ctx.fill();
+
+      // 꼬리 흰 줄무늬 & 검은 테두리
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 몸통 (주황색 타원)
+      ctx.fillStyle = '#ff6d00';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // 흰색 줄무늬 1
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(-4, 0, 4.5, 14.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 흰색 줄무늬 2 (가운데 큰 줄무늬)
+      ctx.beginPath();
+      ctx.ellipse(7, 0, 4, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 눈
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(12, -4, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 눈동자
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.arc(14, -4, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 눈 하이라이트
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(15, -5, 1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 옆지느러미
+      ctx.fillStyle = '#ff9100';
+      ctx.beginPath();
+      ctx.ellipse(1, 4, 6, 4, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    },
+
+    update() {
+      this.velocity += this.gravity;
+      this.y += this.velocity;
+
+      // 회전 각도 조절
+      if (this.velocity < 0) {
+        this.angle = Math.max(-0.4, this.velocity * 0.08);
+      } else {
+        this.angle = Math.min(0.5, this.velocity * 0.06);
+      }
+
+      // 화면 바닥/천장 충돌 체크
+      if (this.y + this.radius > GAME_HEIGHT) {
+        this.y = GAME_HEIGHT - this.radius;
+        gameOver();
+      }
+      if (this.y - this.radius < 0) {
+        this.y = this.radius;
+        this.velocity = 0;
+      }
+    },
+
+    flap() {
+      this.velocity = this.jumpStrength;
+    },
+
+    reset() {
+      this.y = GAME_HEIGHT / 2;
+      this.velocity = 0;
+      this.angle = 0;
+    }
+  };
+
+  // 장애물 (아래에서 위로 떠오르는 버블 기둥)
+  const obstacles = [];
+  const obstacleSpacing = 130; // 장애물 생성 주기 (프레임)
+
+  class ObstacleColumn {
+    constructor() {
+      this.x = GAME_WIDTH + 20;
+      this.speedX = 2.4; // 왼쪽으로 이동하는 속도
+      this.speedY = 1.6; // 위로 떠오르는 속도
+      this.passed = false;
+
+      // 안전 통과 구역(Gap)의 Y 좌표와 높이
+      this.gapSize = 135;
+      this.gapY = Math.random() * (GAME_HEIGHT - this.gapSize - 160) + 80;
+
+      // 물방울 입자 효과들
+      this.bubbles = [];
+      for (let i = 0; i < 18; i++) {
+        const isUpper = Math.random() < 0.5;
+        const by = isUpper 
+          ? Math.random() * this.gapY 
+          : this.gapY + this.gapSize + Math.random() * (GAME_HEIGHT - (this.gapY + this.gapSize));
+        this.bubbles.push({
+          relX: (Math.random() - 0.5) * 36,
+          y: by,
+          r: Math.random() * 8 + 6,
+          speed: Math.random() * 1.5 + 1
+        });
+      }
+    }
+
+    update() {
+      this.x -= this.speedX;
+      // 물방울 개별 상승 애니메이션
+      this.bubbles.forEach(b => {
+        b.y -= b.speed;
+        if (b.y < 0) b.y = GAME_HEIGHT;
+      });
+    }
+
+    draw() {
+      ctx.save();
+      // 위쪽 버블 장벽 기둥
+      this.drawBubbleStream(0, this.gapY);
+
+      // 아래쪽 버블 장벽 기둥
+      this.drawBubbleStream(this.gapY + this.gapSize, GAME_HEIGHT);
+
+      // 떠오르는 물방울 디테일 그리기
+      this.bubbles.forEach(b => {
+        ctx.beginPath();
+        ctx.arc(this.x + b.relX, b.y, b.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 방울 하이라이트
+        ctx.beginPath();
+        ctx.arc(this.x + b.relX - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    drawBubbleStream(top, bottom) {
+      if (bottom <= top) return;
+      const height = bottom - top;
+      
+      const grad = ctx.createLinearGradient(this.x - 20, 0, this.x + 20, 0);
+      grad.addColorStop(0, 'rgba(100, 200, 255, 0.05)');
+      grad.addColorStop(0.5, 'rgba(180, 240, 255, 0.35)');
+      grad.addColorStop(1, 'rgba(100, 200, 255, 0.05)');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(this.x - 22, top, 44, height);
+
+      // 경계선 물결 느낌
+      ctx.strokeStyle = 'rgba(200, 240, 255, 0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(this.x - 20, top);
+      ctx.lineTo(this.x - 20, bottom);
+      ctx.moveTo(this.x + 20, top);
+      ctx.lineTo(this.x + 20, bottom);
+      ctx.stroke();
+    }
+
+    hits(fish) {
+      // 가로 영역 안으로 들어왔을 때
+      if (fish.x + fish.radius > this.x - 20 && fish.x - fish.radius < this.x + 20) {
+        // Gap 범위를 벗어나면 충돌
+        if (fish.y - fish.radius < this.gapY || fish.y + fish.radius > this.gapY + this.gapSize) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
+  // 배경 부유 입자들
+  const bgParticles = Array.from({ length: 25 }, () => ({
+    x: Math.random() * GAME_WIDTH,
+    y: Math.random() * GAME_HEIGHT,
+    r: Math.random() * 3 + 1,
+    speed: Math.random() * 0.8 + 0.3
+  }));
+
+  function updateBackground() {
+    bgParticles.forEach(p => {
+      p.y -= p.speed;
+      if (p.y < 0) {
+        p.y = GAME_HEIGHT;
+        p.x = Math.random() * GAME_WIDTH;
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.fill();
+    });
+  }
+
+  function handleAction() {
+    if (gameState === 'START') {
+      gameState = 'PLAYING';
+      nemo.flap();
+    } else if (gameState === 'PLAYING') {
+      nemo.flap();
+    } else if (gameState === 'GAMEOVER') {
+      // 재시작
+      obstacles.length = 0;
+      score = 0;
+      frames = 0;
+      nemo.reset();
+      gameState = 'PLAYING';
+      nemo.flap();
+    }
+  }
+
+  // 터치 & 마우스 클릭 이벤트 등록
+  window.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    handleAction();
+  }, { passive: false });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      handleAction();
+    }
+  });
+
+  function gameOver() {
+    gameState = 'GAMEOVER';
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('nemo_highscore', highScore);
+    }
+  }
+
+  // 메인 게임 루프
+  function loop() {
+    ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    // 배경 물방울 효과
+    updateBackground();
+
+    if (gameState === 'START') {
+      nemo.draw();
+      drawUIStart();
+    } else if (gameState === 'PLAYING') {
+      frames++;
+
+      // 장애물 생성
+      if (frames % obstacleSpacing === 0) {
+        obstacles.push(new ObstacleColumn());
+      }
+
+      // 장애물 업데이트 및 판정
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const ob = obstacles[i];
+        ob.update();
+        ob.draw();
+
+        if (ob.hits(nemo)) {
+          gameOver();
+        }
+
+        // 점수 획득
+        if (!ob.passed && ob.x < nemo.x) {
+          ob.passed = true;
+          score++;
+        }
+
+        // 화면 밖으로 나간 장애물 제거
+        if (ob.x < -40) {
+          obstacles.splice(i, 1);
+        }
+      }
+
+      nemo.update();
+      nemo.draw();
+      drawScore();
+
+    } else if (gameState === 'GAMEOVER') {
+      // 정지된 장애물들 유지
+      obstacles.forEach(ob => ob.draw());
+      nemo.draw();
+      drawUIGameOver();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  function drawScore() {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(score, GAME_WIDTH / 2, 80);
+    ctx.shadowBlur = 0;
+  }
+
+  function drawUIStart() {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 30px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText("니모의 버블 탈출", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80);
+
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = '#ffca28';
+    ctx.fillText("화면을 터치해서 헤엄치세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '14px sans-serif';
+    ctx.fillText("떠오르는 물방울 기둥을 피하세요", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 100);
+  }
+
+  function drawUIGameOver() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    ctx.fillStyle = '#ff5252';
+    ctx.font = 'bold 34px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText("GAME OVER", GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '20px sans-serif';
+    ctx.fillText(`현재 점수: ${score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
+    ctx.fillText(`최고 기록: ${highScore}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 35);
+
+    ctx.fillStyle = '#ffeb3b';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText("화면을 터치하여 다시 시작", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90);
+  }
+
+  requestAnimationFrame(loop);
+</script>
+</body>
+</html>
