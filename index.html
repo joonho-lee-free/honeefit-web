@@ -260,6 +260,13 @@
     }
     GAME_WIDTH = canvas.width;
     GAME_HEIGHT = canvas.height;
+
+    if (nemo) {
+      nemo.x = isLandscape ? 120 : 90;
+      if (gameState === 'START' || gameState === 'MENU') {
+        nemo.y = GAME_HEIGHT / 2;
+      }
+    }
   }
 
   window.addEventListener('resize', updateDimensions);
@@ -288,7 +295,7 @@
       enableFullScreen();
       updateDimensions();
 
-      // 니모 게임 리셋
+      // 니모 게임 완전 리셋
       obstacles.length = 0;
       score = 0;
       frames = 0;
@@ -314,11 +321,9 @@
   let levelNoticeTimer = 0;
   let lastLevel = 1;
 
-  // 5점 단위로 레벨업 (Level 1, 2, 3...)
-  // 5개 레벨(25점)이 지나갈 때마다 속도 +0.5, 구멍 -10px 스케일링
   function getLevelInfo(s) {
     const lvl = Math.floor(s / 5) + 1;
-    const tier = Math.floor((lvl - 1) / 5); // 0 (Lv1~5), 1 (Lv6~10), 2 (Lv11~15)...
+    const tier = Math.floor((lvl - 1) / 5);
     let title = `LV.${lvl}`;
     if (tier === 0) title = `LV.${lvl} (초급)`;
     else if (tier === 1) title = `LV.${lvl} (중급)`;
@@ -328,8 +333,8 @@
   }
 
   const nemo = {
-    x: 80,
-    y: GAME_HEIGHT / 2,
+    x: 90,
+    y: 350,
     radius: 18,
     hitRadius: 10,
     velocity: 0,
@@ -342,7 +347,11 @@
       ctx.translate(this.x, this.y);
       ctx.rotate(this.angle);
 
-      const tailWiggle = Math.sin(frames * 0.3) * 4;
+      const tailWiggle = Math.sin(frames * 0.3) * 5;
+
+      // 선명한 황금색 후광 그림자 효과
+      ctx.shadowColor = 'rgba(255, 235, 59, 0.7)';
+      ctx.shadowBlur = 10;
 
       // 꼬리
       ctx.fillStyle = '#ff5722';
@@ -354,8 +363,8 @@
       ctx.closePath();
       ctx.fill();
 
-      ctx.strokeStyle = '#222';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.8;
       ctx.stroke();
 
       // 몸통
@@ -370,26 +379,28 @@
       ctx.beginPath();
       ctx.ellipse(-4, 0, 4.5, 14.5, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.stroke();
 
       // 줄무늬 2
       ctx.beginPath();
       ctx.ellipse(7, 0, 4, 15, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.stroke();
 
       // 눈
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(12, -4, 5, 0, Math.PI * 2);
+      ctx.arc(12, -4, 5.5, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.fillStyle = '#000000';
       ctx.beginPath();
-      ctx.arc(14, -4, 2.5, 0, Math.PI * 2);
+      ctx.arc(14, -4, 2.8, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(15, -5, 1, 0, Math.PI * 2);
+      ctx.arc(15, -5, 1.2, 0, Math.PI * 2);
       ctx.fill();
 
       // 옆지느러미
@@ -403,6 +414,14 @@
     },
 
     update() {
+      // 대기(START) 상태에서는 중앙에서 귀엽게 둥실둥실 유영 연출
+      if (gameState === 'START') {
+        this.y = (GAME_HEIGHT / 2) + Math.sin(frames * 0.08) * 8;
+        this.velocity = 0;
+        this.angle = 0;
+        return;
+      }
+
       this.velocity += this.gravity;
       this.y += this.velocity;
 
@@ -427,6 +446,7 @@
     },
 
     reset() {
+      this.x = isLandscape ? 120 : 90;
       this.y = GAME_HEIGHT / 2;
       this.velocity = 0;
       this.angle = 0;
@@ -440,9 +460,8 @@
       this.x = GAME_WIDTH + 20;
       this.passed = false;
       
-      const tier = Math.floor((level - 1) / 5); // 5개 레벨 단위 구간
+      const tier = Math.floor((level - 1) / 5);
       
-      // 5레벨이 넘어갈 때마다 통과 구멍(Gap) 10px씩 축소
       const baseGap = isLandscape ? 165 : 225;
       const gapDecrease = tier * 10;
       this.gapSize = Math.max(isLandscape ? 115 : 155, baseGap - gapDecrease);
@@ -600,55 +619,64 @@
       updateBackground();
 
       const lvlInfo = getLevelInfo(score);
-      const tier = lvlInfo.tier; // 5레벨마다 1씩 증가
+      const tier = lvlInfo.tier;
 
-      // 5레벨(25점)이 넘어갈 때마다 이동 속도 +0.5씩 가속
       const speedBoost = tier * 0.5;
       const currentSpeed = (isLandscape ? 1.7 : 1.35) + speedBoost;
 
-      // 물리적 기둥 간 좌우 거리는 항상 270px로 완전 고정!
       const TARGET_COLUMN_DISTANCE = isLandscape ? 280 : 270;
 
-      const lastObstacle = obstacles[obstacles.length - 1];
-      if (!lastObstacle || (GAME_WIDTH + 20 - lastObstacle.x) >= TARGET_COLUMN_DISTANCE) {
-        obstacles.push(new ObstacleColumn(lvlInfo.level));
-      }
+      if (gameState === 'START') {
+        frames++;
+        nemo.update();
+        nemo.draw();
+        drawUIStart();
+      } else if (gameState === 'PLAYING') {
+        frames++;
 
-      for (let i = obstacles.length - 1; i >= 0; i--) {
-        const ob = obstacles[i];
-        ob.update(currentSpeed);
-        ob.draw();
-
-        if (ob.hits(nemo)) {
-          gameOver();
+        const lastObstacle = obstacles[obstacles.length - 1];
+        if (!lastObstacle || (GAME_WIDTH + 20 - lastObstacle.x) >= TARGET_COLUMN_DISTANCE) {
+          obstacles.push(new ObstacleColumn(lvlInfo.level));
         }
 
-        if (!ob.passed && ob.x < nemo.x) {
-          ob.passed = true;
-          score++;
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const ob = obstacles[i];
+          ob.update(currentSpeed);
+          ob.draw();
 
-          const newLvlInfo = getLevelInfo(score);
-          if (newLvlInfo.level > lastLevel) {
-            lastLevel = newLvlInfo.level;
-            levelNoticeTimer = 90;
+          if (ob.hits(nemo)) {
+            gameOver();
+          }
+
+          if (!ob.passed && ob.x < nemo.x) {
+            ob.passed = true;
+            score++;
+
+            const newLvlInfo = getLevelInfo(score);
+            if (newLvlInfo.level > lastLevel) {
+              lastLevel = newLvlInfo.level;
+              levelNoticeTimer = 90;
+            }
+          }
+
+          if (ob.x < -50) {
+            obstacles.splice(i, 1);
           }
         }
 
-        if (ob.x < -50) {
-          obstacles.splice(i, 1);
-        }
+        nemo.update();
+        nemo.draw();
+        drawScore(lvlInfo);
+        drawLevelNotice(lvlInfo);
+
+      } else if (gameState === 'GAMEOVER') {
+        obstacles.forEach(ob => ob.draw());
+        nemo.draw();
+        drawUIGameOver(lvlInfo);
       }
-
-      nemo.update();
-      nemo.draw();
-      drawScore(lvlInfo);
-      drawLevelNotice(lvlInfo);
-
-    } else if (gameState === 'GAMEOVER') {
-      obstacles.forEach(ob => ob.draw());
-      nemo.draw();
-      drawUIGameOver(lvlInfo);
     }
+
+    requestAnimationFrame(loop);
   }
 
   function drawScore(lvlInfo) {
