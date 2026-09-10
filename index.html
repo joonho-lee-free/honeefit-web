@@ -247,73 +247,7 @@
   let GAME_WIDTH = 400;
   let GAME_HEIGHT = 700;
   let isLandscape = false;
-  let currentAppMode = 'MENU'; // 'MENU' or 'GAME'
-
-  function updateDimensions() {
-    isLandscape = window.innerWidth > window.innerHeight;
-    if (isLandscape) {
-      canvas.width = 800;
-      canvas.height = 450;
-    } else {
-      canvas.width = 400;
-      canvas.height = 700;
-    }
-    GAME_WIDTH = canvas.width;
-    GAME_HEIGHT = canvas.height;
-
-    if (nemo) {
-      nemo.x = isLandscape ? 120 : 90;
-      if (gameState === 'START' || gameState === 'MENU') {
-        nemo.y = GAME_HEIGHT / 2;
-      }
-    }
-  }
-
-  window.addEventListener('resize', updateDimensions);
-  window.addEventListener('orientationchange', () => {
-    setTimeout(updateDimensions, 100);
-  });
-  updateDimensions();
-
-  function enableFullScreen() {
-    const docEl = document.documentElement;
-    const requestFS = docEl.requestFullscreen || 
-                      docEl.webkitRequestFullscreen || 
-                      docEl.mozRequestFullScreen || 
-                      docEl.msRequestFullscreen;
-    if (requestFS && !document.fullscreenElement && !document.webkitFullscreenElement) {
-      requestFS.call(docEl).catch(() => {});
-    }
-  }
-
-  function launchGame(gameId) {
-    if (gameId === 'nemo') {
-      currentAppMode = 'GAME';
-      document.getElementById('portal-container').style.display = 'none';
-      document.getElementById('game-container').style.display = 'flex';
-      
-      enableFullScreen();
-      updateDimensions();
-
-      // 니모 게임 완전 리셋
-      obstacles.length = 0;
-      score = 0;
-      frames = 0;
-      lastLevel = 1;
-      levelNoticeTimer = 0;
-      nemo.reset();
-      gameState = 'START';
-    }
-  }
-
-  function exitToMenu(e) {
-    if (e) e.stopPropagation();
-    currentAppMode = 'MENU';
-    gameState = 'MENU';
-    document.getElementById('game-container').style.display = 'none';
-    document.getElementById('portal-container').style.display = 'flex';
-  }
-
+  let currentAppMode = 'MENU';
   let gameState = 'MENU';
   let score = 0;
   let highScore = localStorage.getItem('nemo_highscore') || 0;
@@ -349,7 +283,6 @@
 
       const tailWiggle = Math.sin(frames * 0.3) * 5;
 
-      // 선명한 황금색 후광 그림자 효과
       ctx.shadowColor = 'rgba(255, 235, 59, 0.7)';
       ctx.shadowBlur = 10;
 
@@ -414,7 +347,6 @@
     },
 
     update() {
-      // 대기(START) 상태에서는 중앙에서 귀엽게 둥실둥실 유영 연출
       if (gameState === 'START') {
         this.y = (GAME_HEIGHT / 2) + Math.sin(frames * 0.08) * 8;
         this.velocity = 0;
@@ -452,6 +384,70 @@
       this.angle = 0;
     }
   };
+
+  function updateDimensions() {
+    isLandscape = window.innerWidth > window.innerHeight;
+    if (isLandscape) {
+      canvas.width = 800;
+      canvas.height = 450;
+    } else {
+      canvas.width = 400;
+      canvas.height = 700;
+    }
+    GAME_WIDTH = canvas.width;
+    GAME_HEIGHT = canvas.height;
+
+    if (typeof nemo !== 'undefined' && nemo) {
+      nemo.x = isLandscape ? 120 : 90;
+      if (gameState === 'START' || gameState === 'MENU') {
+        nemo.y = GAME_HEIGHT / 2;
+      }
+    }
+  }
+
+  window.addEventListener('resize', updateDimensions);
+  window.addEventListener('orientationchange', () => {
+    setTimeout(updateDimensions, 100);
+  });
+  updateDimensions();
+
+  function enableFullScreen() {
+    const docEl = document.documentElement;
+    const requestFS = docEl.requestFullscreen || 
+                      docEl.webkitRequestFullscreen || 
+                      docEl.mozRequestFullScreen || 
+                      docEl.msRequestFullscreen;
+    if (requestFS && !document.fullscreenElement && !document.webkitFullscreenElement) {
+      requestFS.call(docEl).catch(() => {});
+    }
+  }
+
+  function launchGame(gameId) {
+    if (gameId === 'nemo') {
+      currentAppMode = 'GAME';
+      document.getElementById('portal-container').style.display = 'none';
+      document.getElementById('game-container').style.display = 'flex';
+      
+      enableFullScreen();
+      updateDimensions();
+
+      obstacles.length = 0;
+      score = 0;
+      frames = 0;
+      lastLevel = 1;
+      levelNoticeTimer = 0;
+      nemo.reset();
+      gameState = 'START';
+    }
+  }
+
+  function exitToMenu(e) {
+    if (e) e.stopPropagation();
+    currentAppMode = 'MENU';
+    gameState = 'MENU';
+    document.getElementById('game-container').style.display = 'none';
+    document.getElementById('portal-container').style.display = 'flex';
+  }
 
   const obstacles = [];
 
