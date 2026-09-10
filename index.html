@@ -212,7 +212,7 @@
     <div class="game-card" onclick="launchGame('nemo')">
       <div class="game-icon-wrapper">🐠</div>
       <div class="game-name">니모 탈출</div>
-      <div class="game-tag">균일 간격 & 단계별 가속</div>
+      <div class="game-tag">5점 레벨업 & 5단계 가속</div>
       <button class="game-play-btn">게임 시작 ▶</button>
     </div>
 
@@ -314,13 +314,17 @@
   let levelNoticeTimer = 0;
   let lastLevel = 1;
 
+  // 5점 단위로 레벨업 (Level 1, 2, 3...)
+  // 5개 레벨(25점)이 지나갈 때마다 속도 +0.5, 구멍 -10px 스케일링
   function getLevelInfo(s) {
-    const lvl = Math.floor(s / 10) + 1;
-    let title = '초급';
-    if (lvl === 2) title = '중급';
-    else if (lvl === 3) title = '상급';
-    else if (lvl >= 4) title = '마스터';
-    return { level: lvl, title: title };
+    const lvl = Math.floor(s / 5) + 1;
+    const tier = Math.floor((lvl - 1) / 5); // 0 (Lv1~5), 1 (Lv6~10), 2 (Lv11~15)...
+    let title = `LV.${lvl}`;
+    if (tier === 0) title = `LV.${lvl} (초급)`;
+    else if (tier === 1) title = `LV.${lvl} (중급)`;
+    else if (tier === 2) title = `LV.${lvl} (상급)`;
+    else title = `LV.${lvl} (마스터)`;
+    return { level: lvl, tier: tier, title: title };
   }
 
   const nemo = {
@@ -436,9 +440,11 @@
       this.x = GAME_WIDTH + 20;
       this.passed = false;
       
-      // 레벨업 시 통과 구멍(Gap) 크기 축소 (Lv1: 225px -> Lv2: 205px -> Lv3: 185px -> Lv4+: 165px)
+      const tier = Math.floor((level - 1) / 5); // 5개 레벨 단위 구간
+      
+      // 5레벨이 넘어갈 때마다 통과 구멍(Gap) 10px씩 축소
       const baseGap = isLandscape ? 165 : 225;
-      const gapDecrease = (level - 1) * 20;
+      const gapDecrease = tier * 10;
       this.gapSize = Math.max(isLandscape ? 115 : 155, baseGap - gapDecrease);
       
       const minY = 40;
@@ -594,65 +600,55 @@
       updateBackground();
 
       const lvlInfo = getLevelInfo(score);
+      const tier = lvlInfo.tier; // 5레벨마다 1씩 증가
 
-      if (gameState === 'START') {
-        nemo.draw();
-        drawUIStart();
-      } else if (gameState === 'PLAYING') {
-        frames++;
+      // 5레벨(25점)이 넘어갈 때마다 이동 속도 +0.5씩 가속
+      const speedBoost = tier * 0.5;
+      const currentSpeed = (isLandscape ? 1.7 : 1.35) + speedBoost;
 
-        // 현재 레벨 전체 장애물 이동 속도 (모든 장애물이 이 속도로 일률 이동)
-        const speedBoost = (lvlInfo.level - 1) * 0.50;
-        const currentSpeed = (isLandscape ? 1.7 : 1.35) + speedBoost;
+      // 물리적 기둥 간 좌우 거리는 항상 270px로 완전 고정!
+      const TARGET_COLUMN_DISTANCE = isLandscape ? 280 : 270;
 
-        // 물리적 기둥 간 좌우 거리 완전 고정 (세로: 270px, 가로: 280px)
-        const TARGET_COLUMN_DISTANCE = isLandscape ? 280 : 270;
-
-        // 이전 기둥과의 거리가 정확히 TARGET_COLUMN_DISTANCE 이상일 때만 새 기둥 생성
-        const lastObstacle = obstacles[obstacles.length - 1];
-        if (!lastObstacle || (GAME_WIDTH + 20 - lastObstacle.x) >= TARGET_COLUMN_DISTANCE) {
-          obstacles.push(new ObstacleColumn(lvlInfo.level));
-        }
-
-        for (let i = obstacles.length - 1; i >= 0; i--) {
-          const ob = obstacles[i];
-          // 모든 장애물이 현재 스피드로 일관되게 동시 이동 (속도 차로 인한 뭉침 현상 완벽 방지)
-          ob.update(currentSpeed);
-          ob.draw();
-
-          if (ob.hits(nemo)) {
-            gameOver();
-          }
-
-          if (!ob.passed && ob.x < nemo.x) {
-            ob.passed = true;
-            score++;
-
-            const newLvlInfo = getLevelInfo(score);
-            if (newLvlInfo.level > lastLevel) {
-              lastLevel = newLvlInfo.level;
-              levelNoticeTimer = 90;
-            }
-          }
-
-          if (ob.x < -50) {
-            obstacles.splice(i, 1);
-          }
-        }
-
-        nemo.update();
-        nemo.draw();
-        drawScore(lvlInfo);
-        drawLevelNotice(lvlInfo);
-
-      } else if (gameState === 'GAMEOVER') {
-        obstacles.forEach(ob => ob.draw());
-        nemo.draw();
-        drawUIGameOver(lvlInfo);
+      const lastObstacle = obstacles[obstacles.length - 1];
+      if (!lastObstacle || (GAME_WIDTH + 20 - lastObstacle.x) >= TARGET_COLUMN_DISTANCE) {
+        obstacles.push(new ObstacleColumn(lvlInfo.level));
       }
-    }
 
-    requestAnimationFrame(loop);
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const ob = obstacles[i];
+        ob.update(currentSpeed);
+        ob.draw();
+
+        if (ob.hits(nemo)) {
+          gameOver();
+        }
+
+        if (!ob.passed && ob.x < nemo.x) {
+          ob.passed = true;
+          score++;
+
+          const newLvlInfo = getLevelInfo(score);
+          if (newLvlInfo.level > lastLevel) {
+            lastLevel = newLvlInfo.level;
+            levelNoticeTimer = 90;
+          }
+        }
+
+        if (ob.x < -50) {
+          obstacles.splice(i, 1);
+        }
+      }
+
+      nemo.update();
+      nemo.draw();
+      drawScore(lvlInfo);
+      drawLevelNotice(lvlInfo);
+
+    } else if (gameState === 'GAMEOVER') {
+      obstacles.forEach(ob => ob.draw());
+      nemo.draw();
+      drawUIGameOver(lvlInfo);
+    }
   }
 
   function drawScore(lvlInfo) {
@@ -665,7 +661,7 @@
 
     ctx.font = 'bold 16px sans-serif';
     ctx.fillStyle = '#ffca28';
-    ctx.fillText(`LV.${lvlInfo.level} [${lvlInfo.title}]`, GAME_WIDTH / 2, isLandscape ? 75 : 100);
+    ctx.fillText(`${lvlInfo.title}`, GAME_WIDTH / 2, isLandscape ? 75 : 100);
     ctx.shadowBlur = 0;
   }
 
@@ -685,12 +681,12 @@
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
       ctx.shadowBlur = 8;
 
-      let subText = "속도가 가속되고 통과 구멍이 좁아집니다!";
-      if (lvlInfo.level === 2) subText = "중급 진입! 속도 가속 & 구멍 축소 (-20px)";
-      else if (lvlInfo.level === 3) subText = "상급 진입! 속도 추가 가속 & 구멍 축소!";
-      else if (lvlInfo.level >= 4) subText = "마스터 진입! 고난도 연속 도전!";
+      let subText = "5점 달성! 다음 레벨 진입!";
+      if ((lvlInfo.level - 1) % 5 === 0 && lvlInfo.level > 1) {
+        subText = "🔥 난이도 가속 구간! (속도 +0.5 & 구멍 -10px)";
+      }
 
-      ctx.fillText(`LEVEL UP! LV.${lvlInfo.level} [${lvlInfo.title}]`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
+      ctx.fillText(`LEVEL UP! ${lvlInfo.title}`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
       ctx.font = '14px sans-serif';
       ctx.fillStyle = '#ffffff';
       ctx.fillText(subText, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 22);
@@ -711,11 +707,11 @@
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("📏 기둥 간격(270px)은 정확히 고정되어 연속 생성 없음!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
+    ctx.fillText("⭐ 5점마다 레벨 UP! (5레벨마다 속도 +0.5 / 구멍 -10px)", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
 
     ctx.fillStyle = 'rgba(200, 230, 255, 0.75)';
     ctx.font = '13px sans-serif';
-    ctx.fillText("레벨업 시 모든 기둥이 일관되게 가속하며 구멍이 좁아집니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
+    ctx.fillText("기둥 좌우 간격(270px)은 언제나 일정하게 유지됩니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
   }
 
   function drawUIGameOver(lvlInfo) {
@@ -729,7 +725,7 @@
 
     ctx.fillStyle = '#ffffff';
     ctx.font = '20px sans-serif';
-    ctx.fillText(`최종 점수: ${score} (LV.${lvlInfo.level} ${lvlInfo.title})`, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 5);
+    ctx.fillText(`최종 점수: ${score} (${lvlInfo.title})`, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 5);
     ctx.fillText(`최고 기록: ${highScore}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 25);
 
     ctx.fillStyle = '#ffeb3b';
