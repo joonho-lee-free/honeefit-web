@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Deploy: honeefit-web piano practice app -->
+<!-- Deploy: honeefit-web piano practice app with 5-line stave and black keys -->
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
@@ -30,24 +30,26 @@
     }
 
     header {
-      padding: 10px 16px;
+      padding: 6px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       background: #24242c;
       border-bottom: 1px solid #333;
+      flex: 0 0 auto;
+      height: 42px;
     }
     header h1 {
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       color: #4da6ff;
     }
     .nav-btn {
       background: #3a3a48;
       color: #fff;
       border: none;
-      padding: 6px 12px;
+      padding: 4px 9px;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
     }
 
@@ -55,6 +57,8 @@
       flex: 1;
       display: none;
       flex-direction: column;
+      height: calc(100% - 42px);
+      overflow: hidden;
     }
     .view.active {
       display: flex;
@@ -63,8 +67,9 @@
     #menu-view {
       align-items: center;
       justify-content: center;
-      gap: 14px;
-      padding: 20px;
+      gap: 12px;
+      padding: 16px;
+      overflow-y: auto;
     }
     .menu-card {
       width: 100%;
@@ -72,7 +77,7 @@
       background: #282834;
       border: 1px solid #3a3a4c;
       border-radius: 12px;
-      padding: 16px;
+      padding: 14px 16px;
       text-align: left;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,0.25);
@@ -82,14 +87,15 @@
     }
     .menu-card h3 {
       color: #fff;
-      font-size: 1.05rem;
+      font-size: 1rem;
       margin-bottom: 4px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
     .menu-card p {
       color: #aaa;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
     }
     .tag {
       font-size: 0.7rem;
@@ -99,40 +105,56 @@
       color: #fff;
     }
 
+    #practice-view {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      overflow: hidden;
+    }
+    #practice-view.active {
+      display: flex;
+    }
+
     .guide-area {
       flex: 0 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 8px 12px 10px;
-      background: #202028;
+      padding: 6px 10px 8px;
+      background: #1e1e26;
       border-bottom: 1px solid #2a2a35;
     }
-    .exercise-title {
-      font-size: 0.85rem;
-      color: #aaa;
+    .guide-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 380px;
       margin-bottom: 2px;
     }
+    .exercise-title {
+      font-size: 0.82rem;
+      color: #88a;
+    }
     .current-note-display {
-      font-size: 2.2rem;
+      font-size: 1.2rem;
       font-weight: 800;
       color: #00e676;
-      text-shadow: 0 0 14px rgba(0,230,118,0.35);
-      line-height: 1.1;
-      margin: 2px 0 4px;
     }
     .guide-desc {
-      font-size: 0.82rem;
-      color: #ccc;
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 2px;
     }
     .progress-bar-wrap {
-      width: 80%;
-      max-width: 280px;
-      height: 5px;
+      width: 100%;
+      max-width: 340px;
+      height: 4px;
       background: #333;
-      border-radius: 3px;
-      margin-top: 6px;
+      border-radius: 2px;
+      margin-top: 4px;
       overflow: hidden;
     }
     .progress-bar {
@@ -142,55 +164,70 @@
       transition: width 0.2s;
     }
 
+    /* 5선지 오선지 영역 */
+    .stave-container {
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      justify-content: center;
+      margin: 2px 0;
+    }
+
     .piano-container {
       flex: 1;
       min-height: 0;
-      background: #111;
+      background: #0c0c10;
       display: flex;
       justify-content: center;
       align-items: stretch;
-      gap: 5px;
+      gap: 3px;
       position: relative;
-      padding: 8px 8px 12px;
+      padding: 6px 6px 10px;
       box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
       box-sizing: border-box;
       overflow: hidden;
     }
+
+    /* 흰 건반 */
     .white-key {
       flex: 1;
-      max-width: 76px;
+      max-width: 70px;
       height: 100%;
-      background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 85%, #e0e0e0 100%);
+      background: linear-gradient(180deg, #ffffff 0%, #f4f4f4 85%, #e0e0e0 100%);
       border: 1px solid #bbb;
-      border-radius: 0 0 8px 8px;
+      border-radius: 0 0 7px 7px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
-      padding-bottom: 10px;
+      padding-bottom: 8px;
       font-weight: bold;
       color: #333;
-      box-shadow: inset 0 -4px 0 #ccc, 0 4px 8px rgba(0,0,0,0.4);
+      box-shadow: inset 0 -3px 0 #ccc, 0 3px 6px rgba(0,0,0,0.4);
       touch-action: none;
       cursor: pointer;
-      transition: background 0.1s, transform 0.05s;
+      transition: background 0.1s, transform 0.05s, box-shadow 0.1s;
+      z-index: 1;
     }
     .white-key .key-label-name {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 800;
       color: #111;
       line-height: 1;
     }
     .white-key .key-label-code {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: #666;
       margin-top: 2px;
     }
+    /* 흰 건반 터치 눌림 색상 */
     .white-key.active {
-      background: #d5d5d5;
+      background: linear-gradient(180deg, #80d8ff 0%, #40c4ff 100%) !important;
+      border-color: #00b0ff !important;
       transform: translateY(3px);
-      box-shadow: inset 0 -1px 0 #aaa;
+      box-shadow: inset 0 -1px 0 #0091ea !important;
     }
+    /* 흰 건반 가이드 대상 색상 */
     .white-key.target {
       background: linear-gradient(180deg, #c8e6c9 0%, #a5d6a7 85%, #81c784 100%) !important;
       border-color: #388e3c !important;
@@ -199,8 +236,45 @@
     .white-key.target .key-label-name {
       color: #1b5e20;
     }
-    .white-key.target .key-label-code {
-      color: #2e7d32;
+
+    /* 검은 건반 */
+    .black-key {
+      position: absolute;
+      top: 6px;
+      height: 58%;
+      width: 7.6%;
+      max-width: 44px;
+      background: linear-gradient(180deg, #333 0%, #111 80%, #222 100%);
+      border: 1px solid #000;
+      border-radius: 0 0 5px 5px;
+      z-index: 10;
+      box-shadow: 2px 4px 6px rgba(0,0,0,0.6), inset 0 -3px 0 #444;
+      cursor: pointer;
+      touch-action: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 6px;
+      color: #aaa;
+      font-size: 0.65rem;
+      font-weight: bold;
+      transition: background 0.1s, transform 0.05s;
+    }
+    /* 검은 건반 터치 눌림 색상 */
+    .black-key.active {
+      background: linear-gradient(180deg, #ffb74d 0%, #ff9800 100%) !important;
+      border-color: #e65100 !important;
+      transform: translateY(2px);
+      box-shadow: inset 0 -1px 0 #bf360c !important;
+      color: #fff !important;
+    }
+    /* 검은 건반 가이드 대상 색상 */
+    .black-key.target {
+      background: linear-gradient(180deg, #ff9800 0%, #e65100 100%) !important;
+      border-color: #bf360c !important;
+      box-shadow: 0 0 14px rgba(255,152,0,0.9) !important;
+      color: #fff !important;
     }
   </style>
 </head>
@@ -238,9 +312,42 @@
 
   <div id="practice-view" class="view">
     <div class="guide-area">
-      <div id="target-title" class="exercise-title">연습 모드</div>
-      <div id="target-note" class="current-note-display">도 (C4)</div>
-      <div id="target-guide" class="guide-desc">초록색으로 빛나는 건반을 눌러보세요</div>
+      <div class="guide-header-row">
+        <span id="target-title" class="exercise-title">연습 모드</span>
+        <span id="target-note" class="current-note-display">도 (C4)</span>
+      </div>
+
+      <!-- 5선지 SVG 오선지 영역 -->
+      <div class="stave-container">
+        <svg id="stave-svg" width="260" height="70" viewBox="0 0 260 70" style="background:#14141a; border-radius:6px; border:1px solid #333;">
+          <!-- 5선지 라인 -->
+          <line x1="15" y1="15" x2="245" y2="15" stroke="#555" stroke-width="1.2" />
+          <line x1="15" y1="25" x2="245" y2="25" stroke="#555" stroke-width="1.2" />
+          <line x1="15" y1="35" x2="245" y2="35" stroke="#555" stroke-width="1.2" />
+          <line x1="15" y1="45" x2="245" y2="45" stroke="#555" stroke-width="1.2" />
+          <line x1="15" y1="55" x2="245" y2="55" stroke="#555" stroke-width="1.2" />
+
+          <!-- 음자리표 표기 -->
+          <text id="clef-symbol" x="20" y="46" fill="#4da6ff" font-size="32" font-family="serif" font-weight="bold">𝄞</text>
+
+          <!-- 4분음표 그룹 -->
+          <g id="note-group">
+            <!-- 덧줄 (Ledger line) -->
+            <line id="ledger-line" x1="118" y1="65" x2="142" y2="65" stroke="#aaa" stroke-width="1.5" style="display:none;" />
+            
+            <!-- 올림표 (# Sharp) -->
+            <text id="sharp-symbol" x="110" y="40" fill="#00e676" font-size="16" font-weight="bold" style="display:none;">♯</text>
+            
+            <!-- 4분음표 머리 (Quarter Note Head) -->
+            <ellipse id="note-head" cx="130" cy="45" rx="5.5" ry="4" transform="rotate(-20 130 45)" fill="#00e676" />
+            
+            <!-- 4분음표 기둥 (Stem) -->
+            <line id="note-stem" x1="135" y1="45" x2="135" y2="20" stroke="#00e676" stroke-width="2" />
+          </g>
+        </svg>
+      </div>
+
+      <div id="target-guide" class="guide-desc">표시된 건반을 눌러보세요</div>
       <div class="progress-bar-wrap">
         <div id="progress-bar" class="progress-bar"></div>
       </div>
@@ -251,15 +358,42 @@
 
   <script>
     const NOTE_FREQ = {
-      'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
-      'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
+      'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56, 'E3': 164.81,
+      'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'A3': 220.00, 'A#3': 233.08, 'B3': 246.94,
+      'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63,
+      'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
       'C5': 523.25
     };
 
     const NOTE_NAMES_KO = {
-      'C3': '낮은 도', 'D3': '낮은 레', 'E3': '낮은 미', 'F3': '낮은 파', 'G3': '낮은 솔', 'A3': '낮은 라', 'B3': '낮은 시',
-      'C4': '가온 도', 'D4': '레', 'E4': '미', 'F4': '파', 'G4': '솔', 'A4': '라', 'B4': '시',
+      'C3': '낮은 도', 'C#3': '낮은 도#', 'D3': '낮은 레', 'D#3': '낮은 레#', 'E3': '낮은 미',
+      'F3': '낮은 파', 'F#3': '낮은 파#', 'G3': '낮은 솔', 'G#3': '낮은 솔#', 'A3': '낮은 라', 'A#3': '낮은 라#', 'B3': '낮은 시',
+      'C4': '가온 도', 'C#4': '도#', 'D4': '레', 'D#4': '레#', 'E4': '미',
+      'F4': '파', 'F#4': '파#', 'G4': '솔', 'G#4': '솔#', 'A4': '라', 'A#4': '라#', 'B4': '시',
       'C5': '높은 도'
+    };
+
+    // 오선지 Y 좌표 위치 (라인 15, 25, 35, 45, 55)
+    const STAVE_Y_TREBLE = {
+      'C4': 65,  'C#4': 65,
+      'D4': 60,  'D#4': 60,
+      'E4': 55,  
+      'F4': 50,  'F#4': 50,
+      'G4': 45,  'G#4': 45,
+      'A4': 40,  'A#4': 40,
+      'B4': 35,
+      'C5': 30
+    };
+
+    const STAVE_Y_BASS = {
+      'C3': 65,  'C#3': 65,
+      'D3': 60,  'D#3': 60,
+      'E3': 55,  
+      'F3': 50,  'F#3': 50,
+      'G3': 45,  'G#3': 45,
+      'A3': 40,  'A#3': 40,
+      'B3': 35,
+      'C4': 25
     };
 
     const CURRICULUM = {
@@ -285,9 +419,26 @@
       }
     };
 
-    const KEYBOARDS = {
+    const WHITE_KEYBOARDS = {
       'rh': ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'],
       'lh': ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4']
+    };
+
+    const BLACK_KEYBOARDS = {
+      'rh': [
+        { note: 'C#4', posIndex: 0, label: 'C#' },
+        { note: 'D#4', posIndex: 1, label: 'D#' },
+        { note: 'F#4', posIndex: 3, label: 'F#' },
+        { note: 'G#4', posIndex: 4, label: 'G#' },
+        { note: 'A#4', posIndex: 5, label: 'A#' }
+      ],
+      'lh': [
+        { note: 'C#3', posIndex: 0, label: 'C#' },
+        { note: 'D#3', posIndex: 1, label: 'D#' },
+        { note: 'F#3', posIndex: 3, label: 'F#' },
+        { note: 'G#3', posIndex: 4, label: 'G#' },
+        { note: 'A#3', posIndex: 5, label: 'A#' }
+      ]
     };
 
     let audioCtx = null;
@@ -319,9 +470,11 @@
     const pianoEl = document.getElementById('piano');
 
     function buildKeyboard(handType = 'rh') {
-      const notes = KEYBOARDS[handType] || KEYBOARDS['rh'];
       pianoEl.innerHTML = '';
-      notes.forEach(note => {
+
+      // 1. 흰 건반 생성
+      const whiteNotes = WHITE_KEYBOARDS[handType] || WHITE_KEYBOARDS['rh'];
+      whiteNotes.forEach(note => {
         const key = document.createElement('div');
         key.className = 'white-key';
         key.dataset.note = note;
@@ -329,6 +482,19 @@
         key.innerHTML = `<span class="key-label-name">${koName}</span><span class="key-label-code">${note}</span>`;
         pianoEl.appendChild(key);
       });
+
+      // 2. 검은 건반 생성
+      const blackNotes = BLACK_KEYBOARDS[handType] || BLACK_KEYBOARDS['rh'];
+      blackNotes.forEach(bInfo => {
+        const key = document.createElement('div');
+        key.className = 'black-key';
+        key.dataset.note = bInfo.note;
+        key.textContent = bInfo.label;
+        const leftPercent = ((bInfo.posIndex + 1) / 8 * 100) - 3.8;
+        key.style.left = `calc(${leftPercent}% + 3px)`;
+        pianoEl.appendChild(key);
+      });
+
       bindKeyEvents();
     }
 
@@ -361,6 +527,7 @@
     function updateExerciseUI() {
       const targetNote = currentMode.notes[currentStepIndex];
       const koName = NOTE_NAMES_KO[targetNote] || targetNote;
+      const hand = currentMode.hand || 'rh';
 
       document.getElementById('target-title').textContent = `${currentMode.title} (${currentStepIndex + 1} / ${currentMode.notes.length})`;
       document.getElementById('target-note').textContent = `${koName} (${targetNote})`;
@@ -369,21 +536,75 @@
       const progressPercent = (currentStepIndex / currentMode.notes.length) * 100;
       document.getElementById('progress-bar').style.width = `${progressPercent}%`;
 
+      updateStaveNote(targetNote, hand, false);
       highlightTargetKey(targetNote);
+    }
+
+    function updateStaveNote(note, hand = 'rh', isPressed = false) {
+      const isBass = (hand === 'lh');
+      const clefEl = document.getElementById('clef-symbol');
+      clefEl.textContent = isBass ? '𝄢' : '𝄞';
+      clefEl.setAttribute('fill', isBass ? '#ff9100' : '#4da6ff');
+
+      const yMap = isBass ? STAVE_Y_BASS : STAVE_Y_TREBLE;
+      const noteY = yMap[note] || 45;
+
+      const noteHead = document.getElementById('note-head');
+      const noteStem = document.getElementById('note-stem');
+      const ledgerLine = document.getElementById('ledger-line');
+      const sharpSymbol = document.getElementById('sharp-symbol');
+
+      noteHead.setAttribute('cy', noteY);
+      noteHead.setAttribute('transform', `rotate(-20 130 ${noteY})`);
+
+      const stemUp = noteY >= 35;
+      if (stemUp) {
+        noteStem.setAttribute('x1', 135);
+        noteStem.setAttribute('y1', noteY);
+        noteStem.setAttribute('x2', 135);
+        noteStem.setAttribute('y2', noteY - 22);
+      } else {
+        noteStem.setAttribute('x1', 124.5);
+        noteStem.setAttribute('y1', noteY);
+        noteStem.setAttribute('x2', 124.5);
+        noteStem.setAttribute('y2', noteY + 22);
+      }
+
+      if (noteY >= 65) {
+        ledgerLine.style.display = 'block';
+        ledgerLine.setAttribute('y1', 65);
+        ledgerLine.setAttribute('y2', 65);
+      } else {
+        ledgerLine.style.display = 'none';
+      }
+
+      if (note.includes('#')) {
+        sharpSymbol.style.display = 'block';
+        sharpSymbol.setAttribute('y', noteY + 5);
+      } else {
+        sharpSymbol.style.display = 'none';
+      }
+
+      const activeColor = isPressed ? '#00e5ff' : '#00e676';
+      noteHead.setAttribute('fill', activeColor);
+      noteStem.setAttribute('stroke', activeColor);
     }
 
     function highlightTargetKey(note) {
       clearTargetHighlight();
-      const targetKey = pianoEl.querySelector(`.white-key[data-note="${note}"]`);
+      const targetKey = pianoEl.querySelector(`[data-note="${note}"]`);
       if (targetKey) targetKey.classList.add('target');
     }
 
     function clearTargetHighlight() {
-      document.querySelectorAll('.white-key.target').forEach(k => k.classList.remove('target'));
+      document.querySelectorAll('.target').forEach(k => k.classList.remove('target'));
     }
 
     function onKeyPressed(note) {
       playNoteSound(note);
+      
+      const hand = currentMode ? (currentMode.hand || 'rh') : 'rh';
+      updateStaveNote(note, hand, true);
 
       if (!currentMode) return;
       const expectedNote = currentMode.notes[currentStepIndex];
@@ -406,7 +627,7 @@
     }
 
     function bindKeyEvents() {
-      const keys = document.querySelectorAll('.white-key');
+      const keys = document.querySelectorAll('.white-key, .black-key');
       keys.forEach(key => {
         const note = key.dataset.note;
 
@@ -419,6 +640,10 @@
         const release = (e) => {
           e.preventDefault();
           key.classList.remove('active');
+          const hand = currentMode ? (currentMode.hand || 'rh') : 'rh';
+          if (currentMode) {
+            updateStaveNote(currentMode.notes[currentStepIndex], hand, false);
+          }
         };
 
         key.addEventListener('touchstart', press, { passive: false });
@@ -426,6 +651,7 @@
         key.addEventListener('touchcancel', release, { passive: false });
         key.addEventListener('mousedown', press);
         key.addEventListener('mouseup', release);
+        key.addEventListener('mouseleave', release);
       });
     }
 
