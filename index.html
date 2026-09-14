@@ -291,6 +291,11 @@
   </header>
 
   <div id="menu-view" class="view active">
+    <div class="menu-card" onclick="startPractice('free_play')">
+      <h3>자유 연주 <span class="tag" style="background:#e91e63;">자유 모드</span></h3>
+      <p>건반을 자유롭게 누르며 오선지 악보 표기를 확인해보세요</p>
+    </div>
+
     <div class="menu-card" onclick="startPractice('beyer_rh')">
       <h3>바이엘 오른손 기초 <span class="tag">오른손</span></h3>
       <p>가온 도(C4)부터 솔(G4)까지 차례대로 누르는 손가락 훈련</p>
@@ -337,8 +342,7 @@
         </svg>
       </div>
 
-      <div id="target-guide" class="guide-desc">표시된 건반을 눌러보세요</div>
-      <div class="progress-bar-wrap">
+      <div id="progress-bar-wrap" class="progress-bar-wrap">
         <div id="progress-bar" class="progress-bar"></div>
       </div>
     </div>
@@ -387,6 +391,12 @@
     };
 
     const CURRICULUM = {
+      'free_play': {
+        title: '자유 건반 연주',
+        hand: 'rh',
+        isFree: true,
+        notes: []
+      },
       'beyer_rh': {
         title: '바이엘 오른손 5음 연습',
         hand: 'rh',
@@ -511,13 +521,25 @@
     }
 
     function updateExerciseUI() {
+      const isFree = currentMode.isFree;
+      const progressWrap = document.getElementById('progress-bar-wrap');
+      const hand = currentMode.hand || 'rh';
+
+      if (isFree) {
+        progressWrap.style.display = 'none';
+        document.getElementById('target-title').textContent = '자유 연주 모드';
+        document.getElementById('target-note').textContent = activePressedNote ? `${NOTE_NAMES_KO[activePressedNote]} (${activePressedNote})` : '자유 연주 🎵';
+        renderFullStave(null, hand, activePressedNote);
+        clearTargetHighlight();
+        return;
+      }
+
+      progressWrap.style.display = 'block';
       const targetNote = currentMode.notes[currentStepIndex];
       const koName = NOTE_NAMES_KO[targetNote] || targetNote;
-      const hand = currentMode.hand || 'rh';
 
       document.getElementById('target-title').textContent = `${currentMode.title} (${currentStepIndex + 1} / ${currentMode.notes.length})`;
       document.getElementById('target-note').textContent = `${koName} (${targetNote})`;
-      document.getElementById('target-guide').textContent = '표시된 건반을 눌러보세요';
 
       const progressPercent = (currentStepIndex / currentMode.notes.length) * 100;
       document.getElementById('progress-bar').style.width = `${progressPercent}%`;
@@ -559,7 +581,7 @@
           lLine.setAttribute('y1', 68);
           lLine.setAttribute('x2', x + 10);
           lLine.setAttribute('y2', 68);
-          lLine.setAttribute('stroke', isTarget ? '#00e676' : '#777');
+          lLine.setAttribute('stroke', isTarget ? '#00e676' : (isPressed ? '#00e5ff' : '#777'));
           lLine.setAttribute('stroke-width', '1.5');
           container.appendChild(lLine);
         }
@@ -575,6 +597,8 @@
 
         if (isTarget) {
           head.setAttribute('filter', 'drop-shadow(0 0 4px #00e676)');
+        } else if (isPressed) {
+          head.setAttribute('filter', 'drop-shadow(0 0 4px #00e5ff)');
         }
         container.appendChild(head);
 
@@ -601,9 +625,9 @@
         text.setAttribute('x', x);
         text.setAttribute('y', 12);
         text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', isTarget ? '#00e676' : '#999');
+        text.setAttribute('fill', isTarget ? '#00e676' : (isPressed ? '#00e5ff' : '#999'));
         text.setAttribute('font-size', '10');
-        text.setAttribute('font-weight', isTarget ? 'bold' : 'normal');
+        text.setAttribute('font-weight', (isTarget || isPressed) ? 'bold' : 'normal');
         const koShort = (NOTE_NAMES_KO[note] || note).replace('가온 ', '').replace('낮은 ', '').replace('높은 ', '');
         text.textContent = koShort;
         container.appendChild(text);
@@ -625,6 +649,13 @@
       
       activePressedNote = note;
       const hand = currentMode ? (currentMode.hand || 'rh') : 'rh';
+
+      if (currentMode && currentMode.isFree) {
+        document.getElementById('target-note').textContent = `${NOTE_NAMES_KO[note] || note} (${note})`;
+        renderFullStave(null, hand, activePressedNote);
+        return;
+      }
+
       const expectedNote = currentMode ? currentMode.notes[currentStepIndex] : null;
       renderFullStave(expectedNote, hand, activePressedNote);
 
@@ -635,7 +666,6 @@
         if (currentStepIndex >= currentMode.notes.length) {
           document.getElementById('progress-bar').style.width = '100%';
           document.getElementById('target-note').textContent = '참 잘했어요! 🎉';
-          document.getElementById('target-guide').textContent = '연습을 완주했습니다.';
           clearTargetHighlight();
           setTimeout(() => {
             alert('🎉 연습을 완주했습니다!');
@@ -665,8 +695,11 @@
           key.classList.remove('active');
           activePressedNote = null;
           const hand = currentMode ? (currentMode.hand || 'rh') : 'rh';
-          const expectedNote = currentMode ? currentMode.notes[currentStepIndex] : null;
-          if (currentMode) {
+          if (currentMode && currentMode.isFree) {
+            document.getElementById('target-note').textContent = '자유 연주 🎵';
+            renderFullStave(null, hand, null);
+          } else if (currentMode) {
+            const expectedNote = currentMode.notes[currentStepIndex];
             renderFullStave(expectedNote, hand, null);
           }
         };
