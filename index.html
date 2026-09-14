@@ -100,37 +100,39 @@
     }
 
     .guide-area {
-      flex: 1;
+      flex: 0 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 10px;
+      padding: 8px 12px 10px;
       background: #202028;
+      border-bottom: 1px solid #2a2a35;
     }
     .exercise-title {
-      font-size: 1rem;
+      font-size: 0.85rem;
       color: #aaa;
-      margin-bottom: 6px;
+      margin-bottom: 2px;
     }
     .current-note-display {
-      font-size: 2.8rem;
+      font-size: 2.2rem;
       font-weight: 800;
       color: #00e676;
-      text-shadow: 0 0 16px rgba(0,230,118,0.3);
-      margin-bottom: 4px;
+      text-shadow: 0 0 14px rgba(0,230,118,0.35);
+      line-height: 1.1;
+      margin: 2px 0 4px;
     }
     .guide-desc {
-      font-size: 0.9rem;
-      color: #ddd;
+      font-size: 0.82rem;
+      color: #ccc;
     }
     .progress-bar-wrap {
       width: 80%;
-      max-width: 300px;
-      height: 6px;
+      max-width: 280px;
+      height: 5px;
       background: #333;
       border-radius: 3px;
-      margin-top: 10px;
+      margin-top: 6px;
       overflow: hidden;
     }
     .progress-bar {
@@ -141,35 +143,63 @@
     }
 
     .piano-container {
-      height: 200px;
+      flex: 1;
+      min-height: 0;
       background: #111;
       display: flex;
       justify-content: center;
+      align-items: stretch;
+      gap: 5px;
       position: relative;
-      padding: 10px 0 12px;
+      padding: 8px 8px 12px;
       box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+      box-sizing: border-box;
+      overflow: hidden;
     }
     .white-key {
       flex: 1;
-      max-width: 44px;
+      max-width: 76px;
       height: 100%;
-      background: #fafafa;
-      border: 1px solid #ccc;
-      border-radius: 0 0 5px 5px;
+      background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 85%, #e0e0e0 100%);
+      border: 1px solid #bbb;
+      border-radius: 0 0 8px 8px;
       display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding-bottom: 8px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 10px;
       font-weight: bold;
+      color: #333;
+      box-shadow: inset 0 -4px 0 #ccc, 0 4px 8px rgba(0,0,0,0.4);
+      touch-action: none;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.05s;
+    }
+    .white-key .key-label-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #111;
+      line-height: 1;
+    }
+    .white-key .key-label-code {
+      font-size: 0.72rem;
       color: #666;
-      font-size: 0.78rem;
+      margin-top: 2px;
     }
     .white-key.active {
       background: #d5d5d5;
-      transform: translateY(2px);
+      transform: translateY(3px);
+      box-shadow: inset 0 -1px 0 #aaa;
     }
     .white-key.target {
-      background: #c8e6c9 !important;
+      background: linear-gradient(180deg, #c8e6c9 0%, #a5d6a7 85%, #81c784 100%) !important;
+      border-color: #388e3c !important;
+      box-shadow: inset 0 -4px 0 #2e7d32, 0 0 14px rgba(76,175,80,0.7) !important;
+    }
+    .white-key.target .key-label-name {
+      color: #1b5e20;
+    }
+    .white-key.target .key-label-code {
       color: #2e7d32;
     }
   </style>
@@ -235,20 +265,29 @@
     const CURRICULUM = {
       'beyer_rh': {
         title: '바이엘 오른손 5음 연습',
+        hand: 'rh',
         notes: ['C4', 'D4', 'E4', 'F4', 'G4', 'F4', 'E4', 'D4', 'C4']
       },
       'beyer_lh': {
         title: '바이엘 왼손 5음 연습',
+        hand: 'lh',
         notes: ['C3', 'D3', 'E3', 'F3', 'G3', 'F3', 'E3', 'D3', 'C3']
       },
       'song_twinkle': {
         title: '작은 별',
+        hand: 'rh',
         notes: ['C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4', 'F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4']
       },
       'song_airplane': {
         title: '비행기',
+        hand: 'rh',
         notes: ['E4', 'D4', 'C4', 'D4', 'E4', 'E4', 'E4', 'D4', 'D4', 'D4', 'E4', 'G4', 'G4']
       }
+    };
+
+    const KEYBOARDS = {
+      'rh': ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'],
+      'lh': ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4']
     };
 
     let audioCtx = null;
@@ -277,16 +316,17 @@
       osc.stop(ctx.currentTime + 0.72);
     }
 
-    const whiteNotes = ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
     const pianoEl = document.getElementById('piano');
 
-    function buildKeyboard() {
+    function buildKeyboard(handType = 'rh') {
+      const notes = KEYBOARDS[handType] || KEYBOARDS['rh'];
       pianoEl.innerHTML = '';
-      whiteNotes.forEach(note => {
+      notes.forEach(note => {
         const key = document.createElement('div');
         key.className = 'white-key';
         key.dataset.note = note;
-        key.textContent = note.replace(/\d/, '');
+        const koName = (NOTE_NAMES_KO[note] || note).replace('가온 ', '').replace('낮은 ', '').replace('높은 ', '');
+        key.innerHTML = `<span class="key-label-name">${koName}</span><span class="key-label-code">${note}</span>`;
         pianoEl.appendChild(key);
       });
       bindKeyEvents();
@@ -298,6 +338,8 @@
     function startPractice(modeKey) {
       currentMode = CURRICULUM[modeKey];
       currentStepIndex = 0;
+
+      buildKeyboard(currentMode.hand || 'rh');
 
       document.getElementById('menu-view').classList.remove('active');
       document.getElementById('practice-view').classList.add('active');
@@ -313,6 +355,7 @@
       document.getElementById('back-btn').style.display = 'none';
       document.getElementById('header-title').textContent = '모바일 피아노 연습';
       clearTargetHighlight();
+      buildKeyboard('rh');
     }
 
     function updateExerciseUI() {
@@ -399,7 +442,7 @@
       }
     }
 
-    buildKeyboard();
+    buildKeyboard('rh');
   </script>
 </body>
 </html>
