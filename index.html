@@ -400,37 +400,59 @@
         title: '자유 건반 연주',
         hand: 'rh',
         isFree: true,
-        notes: []
+        lines: [
+          ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
+        ]
       },
       'song_always_with_me': {
         title: '언제나 몇 번이라도',
         hand: 'rh',
-        notes: [
-          'F4', 'G4', 'A4', 'F4', 'C5', 'A4', 'G4', 'C5', 'G4', 'F4', 'D4', 'A4', 'F4', 'E4', 'E4',
-          'D4', 'E4', 'F4', 'G4', 'C4', 'F4', 'G4', 'A4', 'A#4', 'A#4', 'A4', 'G4', 'F4', 'G4',
-          'F4', 'G4', 'A4', 'F4', 'C5', 'A4', 'G4', 'C5', 'G4', 'F4', 'D4', 'D4', 'E4', 'F4', 'C4',
-          'C4', 'D4', 'E4', 'F4', 'G4', 'C4', 'F4', 'G4', 'A4', 'A#4', 'A#4', 'A4', 'G4', 'F4', 'F4'
+        lines: [
+          ['F4', 'G4', 'A4', 'F4', 'C5', 'A4', 'G4', 'C5'],
+          ['G4', 'F4', 'D4', 'A4', 'F4', 'E4', 'E4'],
+          ['D4', 'E4', 'F4', 'G4', 'C4', 'F4', 'G4', 'A4'],
+          ['A#4', 'A#4', 'A4', 'G4', 'F4', 'G4'],
+          ['F4', 'G4', 'A4', 'F4', 'C5', 'A4', 'G4', 'C5'],
+          ['G4', 'F4', 'D4', 'D4', 'E4', 'F4', 'C4'],
+          ['C4', 'D4', 'E4', 'F4', 'G4', 'C4', 'F4', 'G4', 'A4'],
+          ['A#4', 'A#4', 'A4', 'G4', 'F4', 'F4']
         ]
       },
       'beyer_rh': {
         title: '바이엘 오른손 5음 연습',
         hand: 'rh',
-        notes: ['C4', 'D4', 'E4', 'F4', 'G4', 'F4', 'E4', 'D4', 'C4']
+        lines: [
+          ['C4', 'D4', 'E4', 'F4', 'G4', 'F4', 'E4', 'D4', 'C4']
+        ]
       },
       'beyer_lh': {
         title: '바이엘 왼손 5음 연습',
         hand: 'lh',
-        notes: ['C3', 'D3', 'E3', 'F3', 'G3', 'F3', 'E3', 'D3', 'C3']
+        lines: [
+          ['C3', 'D3', 'E3', 'F3', 'G3', 'F3', 'E3', 'D3', 'C3']
+        ]
       },
       'song_twinkle': {
         title: '작은 별',
         hand: 'rh',
-        notes: ['C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4', 'F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4']
+        lines: [
+          ['C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4'],
+          ['F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4'],
+          ['G4', 'G4', 'F4', 'F4', 'E4', 'E4', 'D4'],
+          ['G4', 'G4', 'F4', 'F4', 'E4', 'E4', 'D4'],
+          ['C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4'],
+          ['F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4']
+        ]
       },
       'song_airplane': {
         title: '비행기',
         hand: 'rh',
-        notes: ['E4', 'D4', 'C4', 'D4', 'E4', 'E4', 'E4', 'D4', 'D4', 'D4', 'E4', 'G4', 'G4']
+        lines: [
+          ['E4', 'D4', 'C4', 'D4', 'E4', 'E4', 'E4'],
+          ['D4', 'D4', 'D4', 'E4', 'G4', 'G4'],
+          ['E4', 'D4', 'C4', 'D4', 'E4', 'E4', 'E4'],
+          ['D4', 'D4', 'E4', 'D4', 'C4']
+        ]
       }
     };
 
@@ -509,12 +531,14 @@
     }
 
     let currentMode = null;
-    let currentStepIndex = 0;
+    let currentLineIndex = 0;
+    let currentNoteIndexInLine = 0;
     let activePressedNote = null;
 
     function startPractice(modeKey) {
       currentMode = CURRICULUM[modeKey];
-      currentStepIndex = 0;
+      currentLineIndex = 0;
+      currentNoteIndexInLine = 0;
 
       buildKeyboard(currentMode.hand || 'rh');
 
@@ -544,59 +568,75 @@
         progressWrap.style.display = 'none';
         document.getElementById('target-title').textContent = '자유 연주 모드';
         document.getElementById('target-note').textContent = activePressedNote ? `${NOTE_NAMES_KO[activePressedNote]} (${activePressedNote})` : '';
-        renderFullStave(null, hand, activePressedNote);
+        renderLineStave(currentMode.lines[0], -1, hand, activePressedNote);
         clearTargetHighlight();
         return;
       }
 
       progressWrap.style.display = 'block';
-      const targetNote = currentMode.notes[currentStepIndex];
+
+      const currentLine = currentMode.lines[currentLineIndex];
+      const targetNote = currentLine[currentNoteIndexInLine];
       const koName = NOTE_NAMES_KO[targetNote] || targetNote;
 
-      document.getElementById('target-title').textContent = `${currentMode.title} (${currentStepIndex + 1} / ${currentMode.notes.length})`;
+      const totalLines = currentMode.lines.length;
+      document.getElementById('target-title').textContent = `${currentMode.title} (${currentLineIndex + 1}/${totalLines}줄 · ${currentNoteIndexInLine + 1}/${currentLine.length}음)`;
       document.getElementById('target-note').textContent = `${koName} (${targetNote})`;
 
-      const progressPercent = (currentStepIndex / currentMode.notes.length) * 100;
+      // Progress bar
+      let completedCount = 0;
+      let totalCount = 0;
+      currentMode.lines.forEach((l, idx) => {
+        totalCount += l.length;
+        if (idx < currentLineIndex) completedCount += l.length;
+        else if (idx === currentLineIndex) completedCount += currentNoteIndexInLine;
+      });
+      const progressPercent = (completedCount / totalCount) * 100;
       document.getElementById('progress-bar').style.width = `${progressPercent}%`;
 
-      renderFullStave(targetNote, hand, activePressedNote);
+      renderLineStave(currentLine, currentNoteIndexInLine, hand, activePressedNote);
       highlightTargetKey(targetNote);
     }
 
-    // 5선지 상에 전체 8개 음표 (도,레,미,파,솔,라,시,도) 4분음표 악보 렌더링
-    function renderFullStave(targetNote, hand = 'rh', pressedNote = null) {
+    // 5선지 상에 한 줄 단위의 4분음표 악보 렌더링
+    function renderLineStave(lineNotes, activeIndexInLine = 0, hand = 'rh', pressedNote = null) {
       const isBass = (hand === 'lh');
       const clefEl = document.getElementById('clef-symbol');
       clefEl.textContent = isBass ? '𝄢' : '𝄞';
       clefEl.setAttribute('fill', isBass ? '#ff9100' : '#4da6ff');
 
-      const notes = WHITE_KEYBOARDS[hand] || WHITE_KEYBOARDS['rh'];
       const yMap = isBass ? STAVE_Y_BASS : STAVE_Y_TREBLE;
       const container = document.getElementById('stave-notes-container');
       container.innerHTML = '';
 
-      const startX = 54;
-      const stepX = 31;
+      if (!lineNotes || lineNotes.length === 0) return;
 
-      notes.forEach((note, idx) => {
+      const numNotes = lineNotes.length;
+      const startX = 50;
+      const totalWidth = 240;
+      const stepX = numNotes > 1 ? (totalWidth / (numNotes - 1)) : 0;
+
+      lineNotes.forEach((note, idx) => {
         const x = startX + (idx * stepX);
         const y = yMap[note] || 48;
 
-        const isTarget = (note === targetNote);
+        const isTarget = (idx === activeIndexInLine);
         const isPressed = (note === pressedNote);
+        const isCompleted = (idx < activeIndexInLine);
 
         let color = '#777';
         if (isTarget) color = '#00e676';
-        if (isPressed) color = '#00e5ff';
+        else if (isPressed) color = '#00e5ff';
+        else if (isCompleted) color = '#4caf50';
 
         // 덧줄 (C4/C3)
         if (y >= 68) {
           const lLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          lLine.setAttribute('x1', x - 10);
+          lLine.setAttribute('x1', x - 9);
           lLine.setAttribute('y1', 68);
-          lLine.setAttribute('x2', x + 10);
+          lLine.setAttribute('x2', x + 9);
           lLine.setAttribute('y2', 68);
-          lLine.setAttribute('stroke', isTarget ? '#00e676' : (isPressed ? '#00e5ff' : '#777'));
+          lLine.setAttribute('stroke', color);
           lLine.setAttribute('stroke-width', '1.5');
           container.appendChild(lLine);
         }
@@ -611,9 +651,9 @@
         head.setAttribute('fill', color);
 
         if (isTarget) {
-          head.setAttribute('filter', 'drop-shadow(0 0 4px #00e676)');
+          head.setAttribute('filter', 'drop-shadow(0 0 5px #00e676)');
         } else if (isPressed) {
-          head.setAttribute('filter', 'drop-shadow(0 0 4px #00e5ff)');
+          head.setAttribute('filter', 'drop-shadow(0 0 5px #00e5ff)');
         }
         container.appendChild(head);
 
@@ -640,9 +680,9 @@
         text.setAttribute('x', x);
         text.setAttribute('y', 12);
         text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', isTarget ? '#00e676' : (isPressed ? '#00e5ff' : '#999'));
+        text.setAttribute('fill', isTarget ? '#00e676' : (isPressed ? '#00e5ff' : (isCompleted ? '#66bb6a' : '#888')));
         text.setAttribute('font-size', '10');
-        text.setAttribute('font-weight', (isTarget || isPressed) ? 'bold' : 'normal');
+        text.setAttribute('font-weight', isTarget ? 'bold' : 'normal');
         const koShort = (NOTE_NAMES_KO[note] || note).replace('가온 ', '').replace('낮은 ', '').replace('높은 ', '');
         text.textContent = koShort;
         container.appendChild(text);
@@ -667,28 +707,39 @@
 
       if (currentMode && currentMode.isFree) {
         document.getElementById('target-note').textContent = `${NOTE_NAMES_KO[note] || note} (${note})`;
-        renderFullStave(null, hand, activePressedNote);
+        renderLineStave(currentMode.lines[0], -1, hand, activePressedNote);
         return;
       }
 
-      const expectedNote = currentMode ? currentMode.notes[currentStepIndex] : null;
-      renderFullStave(expectedNote, hand, activePressedNote);
-
       if (!currentMode) return;
 
+      const currentLine = currentMode.lines[currentLineIndex];
+      const expectedNote = currentLine[currentNoteIndexInLine];
+
+      renderLineStave(currentLine, currentNoteIndexInLine, hand, activePressedNote);
+
       if (note === expectedNote) {
-        currentStepIndex++;
-        if (currentStepIndex >= currentMode.notes.length) {
-          document.getElementById('progress-bar').style.width = '100%';
-          document.getElementById('target-note').textContent = '참 잘했어요! 🎉';
-          clearTargetHighlight();
-          setTimeout(() => {
-            alert('🎉 연습을 완주했습니다!');
-            showMenu();
-          }, 400);
-        } else {
-          updateExerciseUI();
+        currentNoteIndexInLine++;
+
+        // 줄 완주 시 다음 줄로 이동
+        if (currentNoteIndexInLine >= currentLine.length) {
+          currentLineIndex++;
+          currentNoteIndexInLine = 0;
+
+          // 전체 곡 완주 시
+          if (currentLineIndex >= currentMode.lines.length) {
+            document.getElementById('progress-bar').style.width = '100%';
+            document.getElementById('target-note').textContent = '참 잘했어요! 🎉';
+            clearTargetHighlight();
+            setTimeout(() => {
+              alert(`🎉 ${currentMode.title} 연주를 완주했습니다!`);
+              showMenu();
+            }, 400);
+            return;
+          }
         }
+
+        updateExerciseUI();
       }
     }
 
@@ -712,10 +763,10 @@
           const hand = currentMode ? (currentMode.hand || 'rh') : 'rh';
           if (currentMode && currentMode.isFree) {
             document.getElementById('target-note').textContent = '';
-            renderFullStave(null, hand, null);
+            renderLineStave(currentMode.lines[0], -1, hand, null);
           } else if (currentMode) {
-            const expectedNote = currentMode.notes[currentStepIndex];
-            renderFullStave(expectedNote, hand, null);
+            const currentLine = currentMode.lines[currentLineIndex];
+            renderLineStave(currentLine, currentNoteIndexInLine, hand, null);
           }
         };
 
@@ -734,7 +785,7 @@
       const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
       const cancelFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
 
-      if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullScreenElement) {
+      if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) {
         if (requestFS) requestFS.call(docEl).catch(() => {});
       } else {
         if (cancelFS) cancelFS.call(doc).catch(() => {});
