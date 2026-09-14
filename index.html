@@ -297,8 +297,8 @@
     </div>
 
     <div class="menu-card" onclick="startPractice('song_always_with_me')">
-      <h3>언제나 몇 번이라도 <span class="tag" style="background:#e91e63;">애니 명곡</span></h3>
-      <p>센과 치히로의 행방불명 - 파솔라파도 라솔도솔 파레라파 미미</p>
+      <h3>언제나 몇 번이라도 <span class="tag" style="background:#e91e63;">전곡 악보</span></h3>
+      <p>센과 치히로의 행방불명 - 33마디 전체 전곡 (파솔라파도 라솔도솔...)</p>
     </div>
 
     <div class="menu-card" onclick="startPractice('beyer_rh')">
@@ -361,7 +361,7 @@
       'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'A3': 220.00, 'A#3': 233.08, 'B3': 246.94,
       'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63,
       'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
-      'C5': 523.25
+      'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99
     };
 
     const NOTE_NAMES_KO = {
@@ -369,7 +369,8 @@
       'F3': '낮은 파', 'F#3': '낮은 파#', 'G3': '낮은 솔', 'G#3': '낮은 솔#', 'A3': '낮은 라', 'A#3': '낮은 라#', 'B3': '낮은 시',
       'C4': '가온 도', 'C#4': '도#', 'D4': '레', 'D#4': '레#', 'E4': '미',
       'F4': '파', 'F#4': '파#', 'G4': '솔', 'G#4': '솔#', 'A4': '라', 'A#4': '시♭', 'B4': '시',
-      'C5': '높은 도'
+      'C5': '높은 도', 'C#5': '높은 도#', 'D5': '높은 레', 'D#5': '높은 레#', 'E5': '높은 미',
+      'F5': '높은 파', 'F#5': '높은 파#', 'G5': '높은 솔'
     };
 
     // 오선지 Y 좌표 위치 (라인 18, 28, 38, 48, 58)
@@ -381,7 +382,11 @@
       'G4': 48,  'G#4': 48,
       'A4': 43,  'A#4': 43,
       'B4': 38,
-      'C5': 33
+      'C5': 33,  'C#5': 33,
+      'D5': 28,  'D#5': 28,
+      'E5': 23,
+      'F5': 18,  'F#5': 18,
+      'G5': 13,  'G#5': 13
     };
 
     const STAVE_Y_BASS = {
@@ -406,16 +411,65 @@
       },
       'song_always_with_me': {
         title: '언제나 몇 번이라도',
-        hand: 'rh',
+        hand: 'always_with_me',
         lines: [
-          [{note:'F4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'4th'}, {note:'F4',dur:'8th'}, {note:'C5',dur:'8th'}, {note:'A4',dur:'4th'}, {note:'G4',dur:'4th'}],
-          [{note:'C5',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'F4',dur:'4th'}, {note:'D4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'F4',dur:'4th'}, {note:'E4',dur:'half'}],
-          [{note:'D4',dur:'8th'}, {note:'E4',dur:'8th'}, {note:'F4',dur:'4th'}, {note:'G4',dur:'4th'}, {note:'C4',dur:'half'}],
-          [{note:'F4',dur:'4th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'A#4',dur:'dotted-4th'}, {note:'A#4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'F4',dur:'4th'}, {note:'G4',dur:'half'}],
-          [{note:'F4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'4th'}, {note:'F4',dur:'8th'}, {note:'C5',dur:'8th'}, {note:'A4',dur:'4th'}, {note:'G4',dur:'4th'}, {note:'C5',dur:'8th'}, {note:'G4',dur:'8th'}],
-          [{note:'F4',dur:'4th'}, {note:'D4',dur:'8th'}, {note:'D4',dur:'8th'}, {note:'E4',dur:'8th'}, {note:'F4',dur:'8th'}, {note:'C4',dur:'dotted-half'}],
-          [{note:'C4',dur:'8th'}, {note:'D4',dur:'8th'}, {note:'E4',dur:'4th'}, {note:'G4',dur:'4th'}, {note:'C4',dur:'half'}],
-          [{note:'F4',dur:'4th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'A#4',dur:'dotted-4th'}, {note:'A#4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'F4',dur:'4th'}, {note:'F4',dur:'half'}]
+          // 1줄 (1~4마디: 파 솔 라 파 도 | 라 솔 도 | 솔 파 레 라 | 파 미 미)
+          [
+            {note:'F4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'F4',dur:'8th'}, {note:'C5',dur:'4th'},
+            {note:'A4',dur:'4th'}, {note:'G4',dur:'4th'}, {note:'C5',dur:'4th'},
+            {note:'G4',dur:'4th'}, {note:'F4',dur:'8th'}, {note:'D4',dur:'8th'}, {note:'A4',dur:'4th'},
+            {note:'F4',dur:'4th'}, {note:'E4',dur:'4th'}, {note:'E4',dur:'half'}
+          ],
+          // 2줄 (5~8마디: 레 미 파 솔 도 | 파 솔 라 시♭ | 시♭ 라 솔 파 솔 | 파 솔 라 파 도)
+          [
+            {note:'D4',dur:'8th'}, {note:'E4',dur:'8th'}, {note:'F4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'C4',dur:'4th'},
+            {note:'F4',dur:'4th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'A#4',dur:'4th'},
+            {note:'A#4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'F4',dur:'8th'}, {note:'G4',dur:'4th'},
+            {note:'F4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'F4',dur:'8th'}, {note:'C5',dur:'4th'}
+          ],
+          // 3줄 (9~12마디: 높은솔 높은도 솔 | 파 레 레 미 파 | 도 | 도 레 미 파 솔)
+          [
+            {note:'G5',dur:'4th'}, {note:'C5',dur:'4th'}, {note:'G4',dur:'4th'},
+            {note:'F4',dur:'4th'}, {note:'D4',dur:'8th'}, {note:'D4',dur:'8th'}, {note:'E4',dur:'8th'}, {note:'F4',dur:'8th'},
+            {note:'C4',dur:'dotted-half'},
+            {note:'C4',dur:'8th'}, {note:'D4',dur:'8th'}, {note:'E4',dur:'8th'}, {note:'F4',dur:'8th'}, {note:'G4',dur:'4th'}
+          ],
+          // 4줄 (13~16마디: 도 파 솔 라 | 시♭ 시♭ 라 솔 파 | 파 | 라 시♭)
+          [
+            {note:'C4',dur:'4th'}, {note:'F4',dur:'4th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'8th'},
+            {note:'A#4',dur:'4th'}, {note:'A#4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'F4',dur:'8th'},
+            {note:'F4',dur:'dotted-half'},
+            {note:'A4',dur:'8th'}, {note:'A#4',dur:'8th'}
+          ],
+          // 5줄 (17~20마디: 높은도 높은도 높은도 | 높은도 높은도 높은레 높은도 시♭ | 라 라 라 | 라 시♭ 라 솔 파)
+          [
+            {note:'C5',dur:'4th'}, {note:'C5',dur:'4th'}, {note:'C5',dur:'4th'},
+            {note:'C5',dur:'4th'}, {note:'C5',dur:'8th'}, {note:'D5',dur:'8th'}, {note:'C5',dur:'8th'}, {note:'A#4',dur:'8th'},
+            {note:'A4',dur:'4th'}, {note:'A4',dur:'4th'}, {note:'A4',dur:'4th'},
+            {note:'A4',dur:'4th'}, {note:'A#4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'F4',dur:'8th'}
+          ],
+          // 6줄 (21~24마디: 파 파 미 레 미 | 미 파 솔 솔 라 | 솔 라 시♭ | 높은도 높은도 높은도)
+          [
+            {note:'F4',dur:'4th'}, {note:'F4',dur:'8th'}, {note:'E4',dur:'8th'}, {note:'D4',dur:'8th'}, {note:'E4',dur:'8th'},
+            {note:'E4',dur:'8th'}, {note:'F4',dur:'8th'}, {note:'G4',dur:'4th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'8th'},
+            {note:'G4',dur:'4th'}, {note:'A4',dur:'8th'}, {note:'A#4',dur:'8th'},
+            {note:'C5',dur:'4th'}, {note:'C5',dur:'4th'}, {note:'C5',dur:'4th'}
+          ],
+          // 7줄 (25~28마디: 높은도 높은도 높은레 높은도 시♭ | 라 라 라 | 라 시♭ 라 솔 파 | 미 레 레 미 파)
+          [
+            {note:'C5',dur:'4th'}, {note:'C5',dur:'8th'}, {note:'D5',dur:'8th'}, {note:'C5',dur:'8th'}, {note:'A#4',dur:'8th'},
+            {note:'A4',dur:'4th'}, {note:'A4',dur:'4th'}, {note:'A4',dur:'4th'},
+            {note:'A4',dur:'4th'}, {note:'A#4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'F4',dur:'8th'},
+            {note:'E4',dur:'4th'}, {note:'D4',dur:'8th'}, {note:'D4',dur:'8th'}, {note:'E4',dur:'8th'}, {note:'F4',dur:'8th'}
+          ],
+          // 8줄 (29~33마디: 솔 도 파 | 레 미 파 솔 도 | 파 솔 라 시♭ | 시♭ 라 솔 파 파 | 파)
+          [
+            {note:'G4',dur:'4th'}, {note:'C4',dur:'4th'}, {note:'F4',dur:'4th'},
+            {note:'D4',dur:'8th'}, {note:'E4',dur:'8th'}, {note:'F4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'C4',dur:'4th'},
+            {note:'F4',dur:'4th'}, {note:'G4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'A#4',dur:'4th'},
+            {note:'A#4',dur:'8th'}, {note:'A4',dur:'8th'}, {note:'G4',dur:'8th'}, {note:'F4',dur:'8th'}, {note:'F4',dur:'4th'},
+            {note:'F4',dur:'dotted-half'}
+          ]
         ]
       },
       'beyer_rh': {
@@ -458,7 +512,8 @@
 
     const WHITE_KEYBOARDS = {
       'rh': ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'],
-      'lh': ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4']
+      'lh': ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4'],
+      'always_with_me': ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5']
     };
 
     // 각 흰 건반에 결합될 검은 건반 매핑
@@ -467,7 +522,11 @@
       'D4': { note: 'D#4', label: 'D#' },
       'F4': { note: 'F#4', label: 'F#' },
       'G4': { note: 'G#4', label: 'G#' },
-      'A4': { note: 'A#4', label: 'A#' },
+      'A4': { note: 'A#4', label: '시♭' },
+      'C5': { note: 'C#5', label: 'C#' },
+      'D5': { note: 'D#5', label: 'D#' },
+      'F5': { note: 'F#5', label: 'F#' },
+      'G5': { note: 'G#5', label: 'G#' },
       'C3': { note: 'C#3', label: 'C#' },
       'D3': { note: 'D#3', label: 'D#' },
       'F3': { note: 'F#3', label: 'F#' },
@@ -715,6 +774,18 @@
           container.appendChild(flag);
         }
 
+        // 임시표 (시♭ 등 플랫/샵 표시)
+        if (note === 'A#4' || note.includes('#')) {
+          const acc = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          acc.setAttribute('x', x - 9);
+          acc.setAttribute('y', y + 3);
+          acc.setAttribute('fill', color);
+          acc.setAttribute('font-size', '11');
+          acc.setAttribute('font-weight', 'bold');
+          acc.textContent = '♭';
+          container.appendChild(acc);
+        }
+
         // 음이름 텍스트 (도,레,미,파,솔,라,시,도)
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('x', x);
@@ -754,11 +825,12 @@
       if (!currentMode) return;
 
       const currentLine = currentMode.lines[currentLineIndex];
-      const expectedNote = currentLine[currentNoteIndexInLine];
+      const rawItem = currentLine[currentNoteIndexInLine];
+      const { note: targetNote } = getNoteInfo(rawItem);
 
       renderLineStave(currentLine, currentNoteIndexInLine, hand, activePressedNote);
 
-      if (note === expectedNote) {
+      if (note === targetNote) {
         currentNoteIndexInLine++;
 
         // 줄 완주 시 다음 줄로 이동
