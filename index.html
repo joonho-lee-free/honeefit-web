@@ -212,7 +212,7 @@
     <div class="game-card" onclick="launchGame('nemo')">
       <div class="game-icon-wrapper">🐠</div>
       <div class="game-name">니모 탈출</div>
-      <div class="game-tag">5레벨마다 가속 & 해파리·상어 등장!</div>
+      <div class="game-tag">7기둥 🛡️방어막 & 🪼10 / 🦈15 등장</div>
       <button class="game-play-btn">게임 시작 ▶</button>
     </div>
 
@@ -275,10 +275,18 @@
     gravity: 0.18,
     jumpStrength: -4.0,
     angle: 0,
+    hasShield: false,
+    invincibleTimer: 0,
 
     draw() {
       ctx.save();
       ctx.translate(this.x, this.y);
+
+      // 무적 시 깜빡임
+      if (this.invincibleTimer > 0 && Math.floor(frames / 4) % 2 === 0) {
+        ctx.globalAlpha = 0.4;
+      }
+
       ctx.rotate(this.angle);
 
       const tailWiggle = Math.sin(frames * 0.3) * 5;
@@ -344,9 +352,37 @@
       ctx.stroke();
 
       ctx.restore();
+
+      // 방어막 아우라 (Shield Aura)
+      if (this.hasShield) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        const shieldPulse = Math.sin(frames * 0.12) * 3;
+
+        ctx.shadowColor = 'rgba(0, 229, 255, 0.9)';
+        ctx.shadowBlur = 14;
+
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.25)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 26 + shieldPulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🛡️', 0, -22 - shieldPulse);
+        ctx.restore();
+      }
     },
 
     update() {
+      if (this.invincibleTimer > 0) {
+        this.invincibleTimer--;
+      }
+
       if (gameState === 'START') {
         this.y = (GAME_HEIGHT / 2) + Math.sin(frames * 0.08) * 8;
         this.velocity = 0;
@@ -365,7 +401,13 @@
 
       if (this.y + this.hitRadius > GAME_HEIGHT) {
         this.y = GAME_HEIGHT - this.hitRadius;
-        gameOver();
+        if (this.hasShield) {
+          this.hasShield = false;
+          this.invincibleTimer = 35;
+          this.velocity = -3.0;
+        } else if (this.invincibleTimer === 0) {
+          gameOver();
+        }
       }
       if (this.y - this.hitRadius < 0) {
         this.y = this.hitRadius;
@@ -382,6 +424,8 @@
       this.y = GAME_HEIGHT / 2;
       this.velocity = 0;
       this.angle = 0;
+      this.hasShield = false;
+      this.invincibleTimer = 0;
     }
   };
 
@@ -434,6 +478,8 @@
       obstacles.length = 0;
       jellyfishes.length = 0;
       sharks.length = 0;
+      shieldItems.length = 0;
+      obstacleCount = 0;
       score = 0;
       frames = 0;
       lastLevel = 1;
@@ -728,6 +774,56 @@
     }
   }
 
+  const shieldItems = [];
+  let obstacleCount = 0;
+
+  class ShieldItem {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.radius = 16;
+      this.collected = false;
+    }
+
+    update(speedX) {
+      this.x -= speedX;
+    }
+
+    draw() {
+      if (this.collected) return;
+      ctx.save();
+      ctx.translate(this.x, this.y);
+
+      const bob = Math.sin(frames * 0.08) * 4;
+      ctx.shadowColor = 'rgba(0, 229, 255, 0.9)';
+      ctx.shadowBlur = 15;
+
+      ctx.fillStyle = 'rgba(0, 229, 255, 0.4)';
+      ctx.beginPath();
+      ctx.arc(0, bob, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🛡️', 0, bob + 1);
+
+      ctx.restore();
+    }
+
+    hits(fish) {
+      if (this.collected) return false;
+      const dx = fish.x - this.x;
+      const dy = fish.y - this.y;
+      const dist = Math.hypot(dx, dy);
+      return dist < (fish.hitRadius + this.radius + 4);
+    }
+  }
+
   const bgParticles = Array.from({ length: 30 }, () => ({
     x: Math.random() * 800,
     y: Math.random() * 700,
@@ -763,6 +859,8 @@
       obstacles.length = 0;
       jellyfishes.length = 0;
       sharks.length = 0;
+      shieldItems.length = 0;
+      obstacleCount = 0;
       score = 0;
       frames = 0;
       lastLevel = 1;
@@ -817,7 +915,13 @@
 
         const lastObstacle = obstacles[obstacles.length - 1];
         if (!lastObstacle || (GAME_WIDTH + 20 - lastObstacle.x) >= TARGET_COLUMN_DISTANCE) {
-          obstacles.push(new ObstacleColumn(lvlInfo.level));
+          const newCol = new ObstacleColumn(lvlInfo.level);
+          obstacles.push(newCol);
+          obstacleCount++;
+
+          if (obstacleCount % 7 === 0) {
+            shieldItems.push(new ShieldItem(newCol.x, newCol.gapY + newCol.gapSize / 2));
+          }
         }
 
         for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -826,7 +930,14 @@
           ob.draw();
 
           if (ob.hits(nemo)) {
-            gameOver();
+            if (nemo.invincibleTimer > 0) {
+              // 무적 판정 중 무시
+            } else if (nemo.hasShield) {
+              nemo.hasShield = false;
+              nemo.invincibleTimer = 35;
+            } else {
+              gameOver();
+            }
           }
 
           if (!ob.passed && ob.x < nemo.x) {
@@ -845,8 +956,22 @@
           }
         }
 
-        // 해파리 스폰 및 업데이트 (3레벨부터)
-        if (lvlInfo.level >= 3 && frames % 220 === 0 && jellyfishes.length < 3) {
+        // 방어막 버블 아이템 업데이트 및 획득
+        for (let i = shieldItems.length - 1; i >= 0; i--) {
+          const item = shieldItems[i];
+          item.update(currentSpeed);
+          item.draw();
+
+          if (item.hits(nemo)) {
+            nemo.hasShield = true;
+            shieldItems.splice(i, 1);
+          } else if (item.x < -40) {
+            shieldItems.splice(i, 1);
+          }
+        }
+
+        // 해파리 스폰 및 업데이트 (기둥 10개 통과 시부터)
+        if (score >= 10 && frames % 220 === 0 && jellyfishes.length < 3) {
           jellyfishes.push(new Jellyfish());
         }
 
@@ -856,7 +981,15 @@
           jf.draw();
 
           if (jf.hits(nemo)) {
-            gameOver();
+            if (nemo.invincibleTimer > 0) {
+              // 무적 판정 중 무시
+            } else if (nemo.hasShield) {
+              nemo.hasShield = false;
+              nemo.invincibleTimer = 35;
+              jellyfishes.splice(i, 1);
+            } else {
+              gameOver();
+            }
           }
 
           if (jf.x < -40) {
@@ -864,8 +997,8 @@
           }
         }
 
-        // 상어 스폰 및 업데이트 (5레벨부터)
-        if (lvlInfo.level >= 5 && frames % 360 === 0 && sharks.length < 2) {
+        // 상어 스폰 및 업데이트 (기둥 15개 통과 시부터)
+        if (score >= 15 && frames % 360 === 0 && sharks.length < 2) {
           sharks.push(new Shark());
         }
 
@@ -875,7 +1008,15 @@
           sk.draw();
 
           if (sk.hits(nemo)) {
-            gameOver();
+            if (nemo.invincibleTimer > 0) {
+              // 무적 판정 중 무시
+            } else if (nemo.hasShield) {
+              nemo.hasShield = false;
+              nemo.invincibleTimer = 35;
+              sharks.splice(i, 1);
+            } else {
+              gameOver();
+            }
           }
 
           if (sk.x < -70) {
@@ -890,6 +1031,7 @@
 
       } else if (gameState === 'GAMEOVER') {
         obstacles.forEach(ob => ob.draw());
+        shieldItems.forEach(item => item.draw());
         jellyfishes.forEach(jf => jf.draw());
         sharks.forEach(sk => sk.draw());
         nemo.draw();
@@ -956,11 +1098,11 @@
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("⭐ 기둥 5개 통과할 때마다 속도 +0.5 즉시 가속!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 40 : 65));
+    ctx.fillText("⭐ 5개 통과마다 속도 +0.5 / 7개마다 🛡️방어막 버블", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 40 : 65));
 
     ctx.fillStyle = '#ff80ab';
     ctx.font = '13px sans-serif';
-    ctx.fillText("🪼 3LV부터 해파리 / 🦈 5LV부터 쾌속 상어 경고 출현", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 65 : 95));
+    ctx.fillText("🪼 10개 통과시 해파리 / 🦈 15개 통과시 쾌속 상어 등장", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 65 : 95));
   }
 
   function drawUIGameOver(lvlInfo) {
