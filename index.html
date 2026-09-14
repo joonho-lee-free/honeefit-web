@@ -2,16 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="TK랜드 아케이드">
-  <meta property="og:title" content="TK랜드 아케이드 - 미니게임 포털">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>TK랜드 아케이드 - 미니게임 포털</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>피아노 연습실</title>
   <style>
     * {
       box-sizing: border-box;
@@ -19,1117 +11,373 @@
       padding: 0;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: manipulation;
+      touch-action: none;
     }
-    html, body {
-      width: 100%;
-      height: 100%;
-      height: 100dvh;
-      background-color: #0b1d3a;
-      color: #ffffff;
+    body {
+      background: #18181c;
+      color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
       overflow: hidden;
     }
 
-    /* 포털 메인 화면 스타일 */
-    #portal-container {
+    header {
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #24242c;
+      border-bottom: 1px solid #333;
+    }
+    header h1 {
+      font-size: 1.1rem;
+      color: #4da6ff;
+    }
+    .nav-btn {
+      background: #3a3a48;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+    }
+    .view.active {
+      display: flex;
+    }
+
+    #menu-view {
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 20px;
+    }
+    .menu-card {
       width: 100%;
-      height: 100%;
+      max-width: 360px;
+      background: #282834;
+      border: 1px solid #3a3a4c;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .menu-card:active {
+      background: #353546;
+    }
+    .menu-card h3 {
+      color: #fff;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .menu-card p {
+      color: #aaa;
+      font-size: 0.82rem;
+    }
+    .tag {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #3d5afe;
+      color: #fff;
+    }
+
+    .guide-area {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px 16px;
-      overflow-y: auto;
-      background: radial-gradient(circle at center top, #1a3a68 0%, #0b1d3a 80%);
+      justify-content: center;
+      padding: 10px;
+      background: #202028;
     }
-
-    .portal-header {
-      text-align: center;
-      margin-bottom: 28px;
-    }
-
-    .portal-title {
-      font-size: 28px;
-      font-weight: 800;
-      color: #4fc3f7;
-      text-shadow: 0 2px 12px rgba(79, 195, 247, 0.4);
+    .exercise-title {
+      font-size: 1rem;
+      color: #aaa;
       margin-bottom: 6px;
     }
-
-    .portal-subtitle {
-      font-size: 14px;
-      color: #b0bec5;
-    }
-
-    .game-grid {
-      width: 100%;
-      max-width: 440px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-      gap: 16px;
-      padding-bottom: 30px;
-    }
-
-    .game-card {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1.5px solid rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      padding: 18px 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-    }
-
-    .game-card:hover, .game-card:active {
-      transform: translateY(-4px) scale(1.02);
-      border-color: #ffb74d;
-      background: rgba(255, 255, 255, 0.14);
-      box-shadow: 0 10px 24px rgba(255, 183, 77, 0.3);
-    }
-
-    .game-icon-wrapper {
-      width: 76px;
-      height: 76px;
-      border-radius: 22px;
-      background: linear-gradient(135deg, #ff7043 0%, #ff9800 100%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 38px;
-      margin-bottom: 12px;
-      box-shadow: 0 4px 12px rgba(255, 112, 67, 0.4);
-    }
-
-    .game-name {
-      font-size: 17px;
-      font-weight: 700;
-      color: #ffffff;
+    .current-note-display {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #00e676;
+      text-shadow: 0 0 16px rgba(0,230,118,0.3);
       margin-bottom: 4px;
     }
-
-    .game-tag {
-      font-size: 11px;
-      background: rgba(255, 255, 255, 0.15);
-      padding: 3px 8px;
-      border-radius: 10px;
-      color: #ffecb3;
-      margin-bottom: 12px;
+    .guide-desc {
+      font-size: 0.9rem;
+      color: #ddd;
     }
-
-    .game-play-btn {
-      width: 100%;
-      padding: 9px 0;
-      background: #ff9800;
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 13px;
-      border-radius: 12px;
-      border: none;
-      box-shadow: 0 3px 8px rgba(255, 152, 0, 0.4);
-      pointer-events: none;
-    }
-
-    /* 준비중 카드 */
-    .game-card.disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    .game-card.disabled:hover, .game-card.disabled:active {
-      transform: none;
-      border-color: rgba(255, 255, 255, 0.15);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .disabled .game-icon-wrapper {
-      background: linear-gradient(135deg, #546e7a 0%, #37474f 100%);
-      box-shadow: none;
-    }
-
-    .disabled .game-play-btn {
-      background: #546e7a;
-      box-shadow: none;
-    }
-
-    /* 게임 캔버스 화면 Container */
-    #game-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      display: none;
-      justify-content: center;
-      align-items: center;
+    .progress-bar-wrap {
+      width: 80%;
+      max-width: 300px;
+      height: 6px;
+      background: #333;
+      border-radius: 3px;
+      margin-top: 10px;
       overflow: hidden;
     }
-
-    canvas {
-      display: block;
-      width: 100%;
+    .progress-bar {
+      width: 0%;
       height: 100%;
-      object-fit: contain;
-      background: linear-gradient(180deg, #1cb5e0 0%, #000851 100%);
+      background: #00e676;
+      transition: width 0.2s;
     }
 
-    #back-home-btn {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      z-index: 100;
-      background: rgba(0, 0, 0, 0.55);
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 7px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
+    .piano-container {
+      height: 200px;
+      background: #111;
       display: flex;
-      align-items: center;
-      gap: 4px;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      justify-content: center;
+      position: relative;
+      padding: 10px 0 12px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
     }
-
-    #back-home-btn:active {
-      background: rgba(255, 255, 255, 0.3);
+    .white-key {
+      flex: 1;
+      max-width: 44px;
+      height: 100%;
+      background: #fafafa;
+      border: 1px solid #ccc;
+      border-radius: 0 0 5px 5px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+      font-weight: bold;
+      color: #666;
+      font-size: 0.78rem;
+    }
+    .white-key.active {
+      background: #d5d5d5;
+      transform: translateY(2px);
+    }
+    .white-key.target {
+      background: #c8e6c9 !important;
+      color: #2e7d32;
     }
   </style>
 </head>
 <body>
 
-<!-- 아케이드 메인 포털 -->
-<div id="portal-container">
-  <div class="portal-header">
-    <div class="portal-title">🎮 TK랜드 아케이드</div>
-    <div class="portal-subtitle">원하는 미니게임을 선택해 플레이하세요!</div>
-  </div>
+  <header>
+    <h1 id="header-title">모바일 피아노 연습</h1>
+    <button id="back-btn" class="nav-btn" style="display:none;" onclick="showMenu()">메뉴로</button>
+  </header>
 
-  <div class="game-grid">
-    <!-- 니모 탈출 카드 아이콘 -->
-    <div class="game-card" onclick="launchGame('nemo')">
-      <div class="game-icon-wrapper">🐠</div>
-      <div class="game-name">니모 탈출</div>
-      <div class="game-tag">7기둥 🛡️방어막 & 🪼10 / 🦈15 등장</div>
-      <button class="game-play-btn">게임 시작 ▶</button>
+  <div id="menu-view" class="view active">
+    <div class="menu-card" onclick="startPractice('beyer_rh')">
+      <h3>바이엘 오른손 기초 <span class="tag">오른손</span></h3>
+      <p>가온 도(C4)부터 솔(G4)까지 차례대로 누르는 손가락 훈련</p>
     </div>
 
-    <!-- 예정 게임 1 -->
-    <div class="game-card disabled">
-      <div class="game-icon-wrapper">🧩</div>
-      <div class="game-name">퍼즐 블록</div>
-      <div class="game-tag">COMING SOON</div>
-      <button class="game-play-btn">준비 중</button>
+    <div class="menu-card" onclick="startPractice('beyer_lh')">
+      <h3>바이엘 왼손 기초 <span class="tag" style="background:#ff9100;">왼손</span></h3>
+      <p>낮은 도(C3)부터 솔(G3)까지 낮은음자리표 기초 건반 훈련</p>
     </div>
 
-    <!-- 예정 게임 2 -->
-    <div class="game-card disabled">
-      <div class="game-icon-wrapper">🚀</div>
-      <div class="game-name">우주 슈팅</div>
-      <div class="game-tag">COMING SOON</div>
-      <button class="game-play-btn">준비 중</button>
+    <div class="menu-card" onclick="startPractice('song_twinkle')">
+      <h3>작은 별 <span class="tag" style="background:#00b0ff;">곡 연습</span></h3>
+      <p>도도솔솔라라솔 - 친숙한 멜로디 연주하기</p>
+    </div>
+
+    <div class="menu-card" onclick="startPractice('song_airplane')">
+      <h3>비행기 <span class="tag" style="background:#00b0ff;">곡 연습</span></h3>
+      <p>미레도레미미미 - 기초 오른손 동요 연습</p>
     </div>
   </div>
-</div>
 
-<!-- 게임 실행 화면 -->
-<div id="game-container">
-  <button id="back-home-btn" onclick="exitToMenu(event)">🏠 메뉴로</button>
-  <canvas id="gameCanvas"></canvas>
-</div>
+  <div id="practice-view" class="view">
+    <div class="guide-area">
+      <div id="target-title" class="exercise-title">연습 모드</div>
+      <div id="target-note" class="current-note-display">도 (C4)</div>
+      <div id="target-guide" class="guide-desc">초록색으로 빛나는 건반을 눌러보세요</div>
+      <div class="progress-bar-wrap">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+    </div>
 
-<script>
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
+    <div class="piano-container" id="piano"></div>
+  </div>
 
-  let GAME_WIDTH = 400;
-  let GAME_HEIGHT = 700;
-  let isLandscape = false;
-  let currentAppMode = 'MENU';
-  let gameState = 'MENU';
-  let score = 0;
-  let highScore = localStorage.getItem('nemo_highscore') || 0;
-  let frames = 0;
-  let levelNoticeTimer = 0;
-  let lastLevel = 1;
+  <script>
+    const NOTE_FREQ = {
+      'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
+      'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
+      'C5': 523.25
+    };
 
-  function getLevelInfo(s) {
-    const lvl = Math.floor(s / 5) + 1;
-    const tier = Math.floor(s / 5);
-    let title = `LV.${lvl}`;
-    if (tier === 0) title = `LV.${lvl} (초급)`;
-    else if (tier === 1) title = `LV.${lvl} (중급)`;
-    else if (tier === 2) title = `LV.${lvl} (상급)`;
-    else title = `LV.${lvl} (마스터)`;
-    return { level: lvl, tier: tier, title: title };
-  }
+    const NOTE_NAMES_KO = {
+      'C3': '낮은 도', 'D3': '낮은 레', 'E3': '낮은 미', 'F3': '낮은 파', 'G3': '낮은 솔', 'A3': '낮은 라', 'B3': '낮은 시',
+      'C4': '가온 도', 'D4': '레', 'E4': '미', 'F4': '파', 'G4': '솔', 'A4': '라', 'B4': '시',
+      'C5': '높은 도'
+    };
 
-  const nemo = {
-    x: 90,
-    y: 350,
-    radius: 18,
-    hitRadius: 10,
-    velocity: 0,
-    gravity: 0.18,
-    jumpStrength: -4.0,
-    angle: 0,
-    hasShield: false,
-    invincibleTimer: 0,
-
-    draw() {
-      ctx.save();
-      ctx.translate(this.x, this.y);
-
-      // 무적 시 깜빡임
-      if (this.invincibleTimer > 0 && Math.floor(frames / 4) % 2 === 0) {
-        ctx.globalAlpha = 0.4;
+    const CURRICULUM = {
+      'beyer_rh': {
+        title: '바이엘 오른손 5음 연습',
+        notes: ['C4', 'D4', 'E4', 'F4', 'G4', 'F4', 'E4', 'D4', 'C4']
+      },
+      'beyer_lh': {
+        title: '바이엘 왼손 5음 연습',
+        notes: ['C3', 'D3', 'E3', 'F3', 'G3', 'F3', 'E3', 'D3', 'C3']
+      },
+      'song_twinkle': {
+        title: '작은 별',
+        notes: ['C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4', 'F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4']
+      },
+      'song_airplane': {
+        title: '비행기',
+        notes: ['E4', 'D4', 'C4', 'D4', 'E4', 'E4', 'E4', 'D4', 'D4', 'D4', 'E4', 'G4', 'G4']
       }
+    };
 
-      ctx.rotate(this.angle);
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
 
-      const tailWiggle = Math.sin(frames * 0.3) * 5;
+    function playNoteSound(note) {
+      if (!NOTE_FREQ[note]) return;
+      const ctx = getAudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
 
-      ctx.shadowColor = 'rgba(255, 235, 59, 0.7)';
-      ctx.shadowBlur = 10;
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(NOTE_FREQ[note], ctx.currentTime);
 
-      // 꼬리
-      ctx.fillStyle = '#ff5722';
-      ctx.beginPath();
-      ctx.moveTo(-15, 0);
-      ctx.lineTo(-28, -12 + tailWiggle);
-      ctx.lineTo(-24, 0);
-      ctx.lineTo(-28, 12 + tailWiggle);
-      ctx.closePath();
-      ctx.fill();
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.7);
 
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1.8;
-      ctx.stroke();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.72);
+    }
 
-      // 몸통
-      ctx.fillStyle = '#ff6d00';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 22, 16, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+    const whiteNotes = ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
+    const pianoEl = document.getElementById('piano');
 
-      // 줄무늬 1
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(-4, 0, 4.5, 14.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+    function buildKeyboard() {
+      pianoEl.innerHTML = '';
+      whiteNotes.forEach(note => {
+        const key = document.createElement('div');
+        key.className = 'white-key';
+        key.dataset.note = note;
+        key.textContent = note.replace(/\d/, '');
+        pianoEl.appendChild(key);
+      });
+      bindKeyEvents();
+    }
 
-      // 줄무늬 2
-      ctx.beginPath();
-      ctx.ellipse(7, 0, 4, 15, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+    let currentMode = null;
+    let currentStepIndex = 0;
 
-      // 눈
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(12, -4, 5.5, 0, Math.PI * 2);
-      ctx.fill();
+    function startPractice(modeKey) {
+      currentMode = CURRICULUM[modeKey];
+      currentStepIndex = 0;
 
-      ctx.fillStyle = '#000000';
-      ctx.beginPath();
-      ctx.arc(14, -4, 2.8, 0, Math.PI * 2);
-      ctx.fill();
+      document.getElementById('menu-view').classList.remove('active');
+      document.getElementById('practice-view').classList.add('active');
+      document.getElementById('back-btn').style.display = 'block';
+      document.getElementById('header-title').textContent = currentMode.title;
 
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(15, -5, 1.2, 0, Math.PI * 2);
-      ctx.fill();
+      updateExerciseUI();
+    }
 
-      // 옆지느러미
-      ctx.fillStyle = '#ff9100';
-      ctx.beginPath();
-      ctx.ellipse(1, 4, 6, 4, 0.4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+    function showMenu() {
+      document.getElementById('practice-view').classList.remove('active');
+      document.getElementById('menu-view').classList.add('active');
+      document.getElementById('back-btn').style.display = 'none';
+      document.getElementById('header-title').textContent = '모바일 피아노 연습';
+      clearTargetHighlight();
+    }
 
-      ctx.restore();
+    function updateExerciseUI() {
+      const targetNote = currentMode.notes[currentStepIndex];
+      const koName = NOTE_NAMES_KO[targetNote] || targetNote;
 
-      // 방어막 아우라 (Shield Aura)
-      if (this.hasShield) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        const shieldPulse = Math.sin(frames * 0.12) * 3;
+      document.getElementById('target-title').textContent = `${currentMode.title} (${currentStepIndex + 1} / ${currentMode.notes.length})`;
+      document.getElementById('target-note').textContent = `${koName} (${targetNote})`;
+      document.getElementById('target-guide').textContent = '표시된 건반을 눌러보세요';
 
-        ctx.shadowColor = 'rgba(0, 229, 255, 0.9)';
-        ctx.shadowBlur = 14;
+      const progressPercent = (currentStepIndex / currentMode.notes.length) * 100;
+      document.getElementById('progress-bar').style.width = `${progressPercent}%`;
 
-        ctx.fillStyle = 'rgba(0, 229, 255, 0.25)';
-        ctx.beginPath();
-        ctx.arc(0, 0, 26 + shieldPulse, 0, Math.PI * 2);
-        ctx.fill();
+      highlightTargetKey(targetNote);
+    }
 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
-        ctx.lineWidth = 2.2;
-        ctx.stroke();
+    function highlightTargetKey(note) {
+      clearTargetHighlight();
+      const targetKey = pianoEl.querySelector(`.white-key[data-note="${note}"]`);
+      if (targetKey) targetKey.classList.add('target');
+    }
 
-        ctx.font = '12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('🛡️', 0, -22 - shieldPulse);
-        ctx.restore();
-      }
-    },
+    function clearTargetHighlight() {
+      document.querySelectorAll('.white-key.target').forEach(k => k.classList.remove('target'));
+    }
 
-    update() {
-      if (this.invincibleTimer > 0) {
-        this.invincibleTimer--;
-      }
+    function onKeyPressed(note) {
+      playNoteSound(note);
 
-      if (gameState === 'START') {
-        this.y = (GAME_HEIGHT / 2) + Math.sin(frames * 0.08) * 8;
-        this.velocity = 0;
-        this.angle = 0;
-        return;
-      }
+      if (!currentMode) return;
+      const expectedNote = currentMode.notes[currentStepIndex];
 
-      this.velocity += this.gravity;
-      this.y += this.velocity;
-
-      if (this.velocity < 0) {
-        this.angle = Math.max(-0.35, this.velocity * 0.07);
-      } else {
-        this.angle = Math.min(0.45, this.velocity * 0.05);
-      }
-
-      if (this.y + this.hitRadius > GAME_HEIGHT) {
-        this.y = GAME_HEIGHT - this.hitRadius;
-        if (this.hasShield) {
-          this.hasShield = false;
-          this.invincibleTimer = 35;
-          this.velocity = -3.0;
-        } else if (this.invincibleTimer === 0) {
-          gameOver();
+      if (note === expectedNote) {
+        currentStepIndex++;
+        if (currentStepIndex >= currentMode.notes.length) {
+          document.getElementById('progress-bar').style.width = '100%';
+          document.getElementById('target-note').textContent = '참 잘했어요! 🎉';
+          document.getElementById('target-guide').textContent = '연습을 완주했습니다.';
+          clearTargetHighlight();
+          setTimeout(() => {
+            alert('🎉 연습을 완주했습니다!');
+            showMenu();
+          }, 400);
+        } else {
+          updateExerciseUI();
         }
       }
-      if (this.y - this.hitRadius < 0) {
-        this.y = this.hitRadius;
-        this.velocity = 0;
-      }
-    },
-
-    flap() {
-      this.velocity = this.jumpStrength;
-    },
-
-    reset() {
-      this.x = isLandscape ? 120 : 90;
-      this.y = GAME_HEIGHT / 2;
-      this.velocity = 0;
-      this.angle = 0;
-      this.hasShield = false;
-      this.invincibleTimer = 0;
-    }
-  };
-
-  function updateDimensions() {
-    isLandscape = window.innerWidth > window.innerHeight;
-    if (isLandscape) {
-      canvas.width = 800;
-      canvas.height = 450;
-    } else {
-      canvas.width = 400;
-      canvas.height = 700;
-    }
-    GAME_WIDTH = canvas.width;
-    GAME_HEIGHT = canvas.height;
-
-    if (typeof nemo !== 'undefined' && nemo) {
-      nemo.x = isLandscape ? 120 : 90;
-      if (gameState === 'START' || gameState === 'MENU') {
-        nemo.y = GAME_HEIGHT / 2;
-      }
-    }
-  }
-
-  window.addEventListener('resize', updateDimensions);
-  window.addEventListener('orientationchange', () => {
-    setTimeout(updateDimensions, 100);
-  });
-  updateDimensions();
-
-  function enableFullScreen() {
-    const docEl = document.documentElement;
-    const requestFS = docEl.requestFullscreen || 
-                      docEl.webkitRequestFullscreen || 
-                      docEl.mozRequestFullScreen || 
-                      docEl.msRequestFullscreen;
-    if (requestFS && !document.fullscreenElement && !document.webkitFullscreenElement) {
-      requestFS.call(docEl).catch(() => {});
-    }
-  }
-
-  function launchGame(gameId) {
-    if (gameId === 'nemo') {
-      currentAppMode = 'GAME';
-      document.getElementById('portal-container').style.display = 'none';
-      document.getElementById('game-container').style.display = 'flex';
-      
-      enableFullScreen();
-      updateDimensions();
-
-      obstacles.length = 0;
-      jellyfishes.length = 0;
-      sharks.length = 0;
-      shieldItems.length = 0;
-      obstacleCount = 0;
-      score = 0;
-      frames = 0;
-      lastLevel = 1;
-      levelNoticeTimer = 0;
-      nemo.reset();
-      gameState = 'START';
-    }
-  }
-
-  function exitToMenu(e) {
-    if (e) e.stopPropagation();
-    currentAppMode = 'MENU';
-    gameState = 'MENU';
-    document.getElementById('game-container').style.display = 'none';
-    document.getElementById('portal-container').style.display = 'flex';
-  }
-
-  const obstacles = [];
-
-  class ObstacleColumn {
-    constructor(level) {
-      this.x = GAME_WIDTH + 20;
-      this.passed = false;
-      
-      const tier = level - 1;
-      
-      const baseGap = isLandscape ? 165 : 225;
-      const gapDecrease = tier * 10;
-      this.gapSize = Math.max(isLandscape ? 115 : 155, baseGap - gapDecrease);
-      
-      const minY = 40;
-      const maxY = GAME_HEIGHT - this.gapSize - 40;
-      this.gapY = Math.random() * Math.max(20, (maxY - minY)) + minY;
-
-      this.bubbles = [];
-      for (let i = 0; i < 18; i++) {
-        const isUpper = Math.random() < 0.5;
-        const by = isUpper 
-          ? Math.random() * this.gapY 
-          : this.gapY + this.gapSize + Math.random() * (GAME_HEIGHT - (this.gapY + this.gapSize));
-        this.bubbles.push({
-          relX: (Math.random() - 0.5) * 36,
-          y: by,
-          r: Math.random() * 8 + 6,
-          speed: Math.random() * 1.4 + 1.0
-        });
-      }
     }
 
-    update(speedX) {
-      this.x -= speedX;
-      this.bubbles.forEach(b => {
-        b.y -= b.speed;
-        if (b.y < 0) b.y = GAME_HEIGHT;
+    function bindKeyEvents() {
+      const keys = document.querySelectorAll('.white-key');
+      keys.forEach(key => {
+        const note = key.dataset.note;
+
+        const press = (e) => {
+          e.preventDefault();
+          key.classList.add('active');
+          onKeyPressed(note);
+        };
+
+        const release = (e) => {
+          e.preventDefault();
+          key.classList.remove('active');
+        };
+
+        key.addEventListener('touchstart', press, { passive: false });
+        key.addEventListener('touchend', release, { passive: false });
+        key.addEventListener('touchcancel', release, { passive: false });
+        key.addEventListener('mousedown', press);
+        key.addEventListener('mouseup', release);
       });
     }
 
-    draw() {
-      ctx.save();
-      this.drawBubbleStream(0, this.gapY);
-      this.drawBubbleStream(this.gapY + this.gapSize, GAME_HEIGHT);
-
-      this.bubbles.forEach(b => {
-        ctx.beginPath();
-        ctx.arc(this.x + b.relX, b.y, b.r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(this.x + b.relX - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.fill();
-      });
-
-      ctx.restore();
-    }
-
-    drawBubbleStream(top, bottom) {
-      if (bottom <= top) return;
-      const height = bottom - top;
-      
-      const grad = ctx.createLinearGradient(this.x - 20, 0, this.x + 20, 0);
-      grad.addColorStop(0, 'rgba(100, 200, 255, 0.05)');
-      grad.addColorStop(0.5, 'rgba(180, 240, 255, 0.35)');
-      grad.addColorStop(1, 'rgba(100, 200, 255, 0.05)');
-
-      ctx.fillStyle = grad;
-      ctx.fillRect(this.x - 22, top, 44, height);
-
-      ctx.strokeStyle = 'rgba(200, 240, 255, 0.3)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(this.x - 20, top);
-      ctx.lineTo(this.x - 20, bottom);
-      ctx.moveTo(this.x + 20, top);
-      ctx.lineTo(this.x + 20, bottom);
-      ctx.stroke();
-    }
-
-    hits(fish) {
-      const hr = fish.hitRadius || fish.radius;
-      if (fish.x + hr > this.x - 18 && fish.x - hr < this.x + 18) {
-        if (fish.y - hr < this.gapY || fish.y + hr > this.gapY + this.gapSize) {
-          return true;
-        }
-      }
-      return false;
-    }
-  }
-
-  const jellyfishes = [];
-
-  class Jellyfish {
-    constructor() {
-      this.x = GAME_WIDTH + 30;
-      this.baseY = Math.random() * (GAME_HEIGHT - 140) + 70;
-      this.y = this.baseY;
-      this.radius = 16;
-      this.hitRadius = 12;
-      this.speed = Math.random() * 0.4 + 1.1;
-      this.bobOffset = Math.random() * Math.PI * 2;
-      this.bobSpeed = 0.04 + Math.random() * 0.02;
-    }
-
-    update(baseSpeed) {
-      this.x -= baseSpeed * 0.85 + this.speed;
-      this.y = this.baseY + Math.sin(frames * this.bobSpeed + this.bobOffset) * 20;
-    }
-
-    draw() {
-      ctx.save();
-      ctx.translate(this.x, this.y);
-
-      ctx.shadowColor = 'rgba(255, 105, 180, 0.8)';
-      ctx.shadowBlur = 12;
-
-      // 갓 (Dome)
-      ctx.fillStyle = 'rgba(255, 120, 195, 0.85)';
-      ctx.beginPath();
-      ctx.arc(0, 0, this.radius, Math.PI, 0, false);
-      ctx.quadraticCurveTo(0, 4, -this.radius, 0);
-      ctx.fill();
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // 갓 내 하이라이트
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-      ctx.beginPath();
-      ctx.arc(-4, -6, 4.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 촉수
-      const wave = Math.sin(frames * 0.15 + this.bobOffset) * 4;
-      ctx.strokeStyle = 'rgba(255, 192, 203, 0.9)';
-      ctx.lineWidth = 2.0;
-
-      for (let i = -3; i <= 3; i += 2) {
-        ctx.beginPath();
-        ctx.moveTo(i * 3, 2);
-        ctx.quadraticCurveTo(i * 4 + wave, 12, i * 3 - wave, 22);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    hits(fish) {
-      const dx = fish.x - this.x;
-      const dy = fish.y - this.y;
-      const dist = Math.hypot(dx, dy);
-      return dist < (fish.hitRadius + this.hitRadius);
-    }
-  }
-
-  const sharks = [];
-
-  class Shark {
-    constructor() {
-      this.x = GAME_WIDTH + 60;
-      this.y = Math.random() * (GAME_HEIGHT - 160) + 80;
-      this.width = 52;
-      this.height = 24;
-      this.hitRadius = 14;
-      this.warningTimer = 55;
-      this.speed = isLandscape ? 4.2 : 3.6;
-      this.active = false;
-    }
-
-    update(baseSpeed) {
-      if (this.warningTimer > 0) {
-        this.warningTimer--;
-        if (this.warningTimer === 0) {
-          this.active = true;
-        }
-      } else {
-        this.x -= baseSpeed + this.speed;
-      }
-    }
-
-    draw() {
-      ctx.save();
-
-      if (this.warningTimer > 0) {
-        const alpha = Math.floor(frames / 6) % 2 === 0 ? 1 : 0.3;
-        ctx.globalAlpha = alpha;
-
-        ctx.fillStyle = '#ff1744';
-        ctx.font = 'bold 20px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText('⚠️ 🦈', GAME_WIDTH - 10, this.y + 6);
-
-        ctx.strokeStyle = 'rgba(255, 23, 68, 0.6)';
-        ctx.setLineDash([6, 4]);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, this.y);
-        ctx.lineTo(GAME_WIDTH, this.y);
-        ctx.stroke();
-      } else {
-        ctx.translate(this.x, this.y);
-
-        ctx.shadowColor = 'rgba(0, 229, 255, 0.6)';
-        ctx.shadowBlur = 10;
-
-        const tailWiggle = Math.sin(frames * 0.35) * 4;
-
-        ctx.fillStyle = '#37474f';
-        ctx.beginPath();
-        ctx.moveTo(20, 0);
-        ctx.lineTo(34, -14 + tailWiggle);
-        ctx.lineTo(28, 0);
-        ctx.lineTo(34, 14 + tailWiggle);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = '#455a64';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 25, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#263238';
-        ctx.beginPath();
-        ctx.moveTo(-2, -10);
-        ctx.lineTo(-12, -22);
-        ctx.lineTo(8, -10);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = '#cfd8dc';
-        ctx.beginPath();
-        ctx.ellipse(0, 3, 20, 7, 0, 0, Math.PI);
-        ctx.fill();
-
-        ctx.fillStyle = '#ff1744';
-        ctx.beginPath();
-        ctx.arc(-14, -3, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(-15, -4, 1, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.moveTo(-20, 2);
-        ctx.lineTo(-24, 5);
-        ctx.lineTo(-18, 5);
-        ctx.lineTo(-22, 8);
-        ctx.lineTo(-16, 4);
-        ctx.fill();
-
-        ctx.strokeStyle = '#263238';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    hits(fish) {
-      if (!this.active) return false;
-      const dx = fish.x - this.x;
-      const dy = fish.y - this.y;
-      const dist = Math.hypot(dx, dy);
-      return dist < (fish.hitRadius + this.hitRadius);
-    }
-  }
-
-  const shieldItems = [];
-  let obstacleCount = 0;
-
-  class ShieldItem {
-    constructor(x, y) {
-      this.x = x;
-      this.y = y;
-      this.radius = 16;
-      this.collected = false;
-    }
-
-    update(speedX) {
-      this.x -= speedX;
-    }
-
-    draw() {
-      if (this.collected) return;
-      ctx.save();
-      ctx.translate(this.x, this.y);
-
-      const bob = Math.sin(frames * 0.08) * 4;
-      ctx.shadowColor = 'rgba(0, 229, 255, 0.9)';
-      ctx.shadowBlur = 15;
-
-      ctx.fillStyle = 'rgba(0, 229, 255, 0.4)';
-      ctx.beginPath();
-      ctx.arc(0, bob, this.radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.font = '16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🛡️', 0, bob + 1);
-
-      ctx.restore();
-    }
-
-    hits(fish) {
-      if (this.collected) return false;
-      const dx = fish.x - this.x;
-      const dy = fish.y - this.y;
-      const dist = Math.hypot(dx, dy);
-      return dist < (fish.hitRadius + this.radius + 4);
-    }
-  }
-
-  const bgParticles = Array.from({ length: 30 }, () => ({
-    x: Math.random() * 800,
-    y: Math.random() * 700,
-    r: Math.random() * 3 + 1,
-    speed: Math.random() * 0.8 + 0.3
-  }));
-
-  function updateBackground() {
-    bgParticles.forEach(p => {
-      p.y -= p.speed;
-      if (p.y < 0) {
-        p.y = GAME_HEIGHT;
-        p.x = Math.random() * GAME_WIDTH;
-      }
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.fill();
-    });
-  }
-
-  function handleAction(e) {
-    if (e && e.target && e.target.closest('#back-home-btn')) return;
-    if (currentAppMode !== 'GAME') return;
-
-    enableFullScreen();
-    if (gameState === 'START') {
-      gameState = 'PLAYING';
-      nemo.flap();
-    } else if (gameState === 'PLAYING') {
-      nemo.flap();
-    } else if (gameState === 'GAMEOVER') {
-      obstacles.length = 0;
-      jellyfishes.length = 0;
-      sharks.length = 0;
-      shieldItems.length = 0;
-      obstacleCount = 0;
-      score = 0;
-      frames = 0;
-      lastLevel = 1;
-      levelNoticeTimer = 0;
-      nemo.reset();
-      gameState = 'PLAYING';
-      nemo.flap();
-    }
-  }
-
-  window.addEventListener('pointerdown', (e) => {
-    if (currentAppMode === 'GAME') {
-      e.preventDefault();
-      handleAction(e);
-    }
-  }, { passive: false });
-
-  window.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && currentAppMode === 'GAME') {
-      handleAction(e);
-    }
-  });
-
-  function gameOver() {
-    gameState = 'GAMEOVER';
-    if (score > highScore) {
-      highScore = score;
-      localStorage.setItem('nemo_highscore', highScore);
-    }
-  }
-
-  function loop() {
-    if (currentAppMode === 'GAME') {
-      ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-      updateBackground();
-
-      const lvlInfo = getLevelInfo(score);
-      const tier = lvlInfo.tier;
-
-      const speedBoost = tier * 0.5;
-      const currentSpeed = (isLandscape ? 1.7 : 1.35) + speedBoost;
-
-      const TARGET_COLUMN_DISTANCE = isLandscape ? 280 : 270;
-
-      if (gameState === 'START') {
-        frames++;
-        nemo.update();
-        nemo.draw();
-        drawUIStart();
-      } else if (gameState === 'PLAYING') {
-        frames++;
-
-        const lastObstacle = obstacles[obstacles.length - 1];
-        if (!lastObstacle || (GAME_WIDTH + 20 - lastObstacle.x) >= TARGET_COLUMN_DISTANCE) {
-          const newCol = new ObstacleColumn(lvlInfo.level);
-          obstacles.push(newCol);
-          obstacleCount++;
-
-          if (obstacleCount % 7 === 0) {
-            shieldItems.push(new ShieldItem(newCol.x, newCol.gapY + newCol.gapSize / 2));
-          }
-        }
-
-        for (let i = obstacles.length - 1; i >= 0; i--) {
-          const ob = obstacles[i];
-          ob.update(currentSpeed);
-          ob.draw();
-
-          if (ob.hits(nemo)) {
-            if (nemo.invincibleTimer > 0) {
-              // 무적 판정 중 무시
-            } else if (nemo.hasShield) {
-              nemo.hasShield = false;
-              nemo.invincibleTimer = 35;
-            } else {
-              gameOver();
-            }
-          }
-
-          if (!ob.passed && ob.x < nemo.x) {
-            ob.passed = true;
-            score++;
-
-            const newLvlInfo = getLevelInfo(score);
-            if (newLvlInfo.level > lastLevel) {
-              lastLevel = newLvlInfo.level;
-              levelNoticeTimer = 90;
-            }
-          }
-
-          if (ob.x < -50) {
-            obstacles.splice(i, 1);
-          }
-        }
-
-        // 방어막 버블 아이템 업데이트 및 획득
-        for (let i = shieldItems.length - 1; i >= 0; i--) {
-          const item = shieldItems[i];
-          item.update(currentSpeed);
-          item.draw();
-
-          if (item.hits(nemo)) {
-            nemo.hasShield = true;
-            shieldItems.splice(i, 1);
-          } else if (item.x < -40) {
-            shieldItems.splice(i, 1);
-          }
-        }
-
-        // 해파리 스폰 및 업데이트 (기둥 10개 통과 시부터)
-        if (score >= 10 && frames % 220 === 0 && jellyfishes.length < 3) {
-          jellyfishes.push(new Jellyfish());
-        }
-
-        for (let i = jellyfishes.length - 1; i >= 0; i--) {
-          const jf = jellyfishes[i];
-          jf.update(currentSpeed);
-          jf.draw();
-
-          if (jf.hits(nemo)) {
-            if (nemo.invincibleTimer > 0) {
-              // 무적 판정 중 무시
-            } else if (nemo.hasShield) {
-              nemo.hasShield = false;
-              nemo.invincibleTimer = 35;
-              jellyfishes.splice(i, 1);
-            } else {
-              gameOver();
-            }
-          }
-
-          if (jf.x < -40) {
-            jellyfishes.splice(i, 1);
-          }
-        }
-
-        // 상어 스폰 및 업데이트 (기둥 15개 통과 시부터)
-        if (score >= 15 && frames % 360 === 0 && sharks.length < 2) {
-          sharks.push(new Shark());
-        }
-
-        for (let i = sharks.length - 1; i >= 0; i--) {
-          const sk = sharks[i];
-          sk.update(currentSpeed);
-          sk.draw();
-
-          if (sk.hits(nemo)) {
-            if (nemo.invincibleTimer > 0) {
-              // 무적 판정 중 무시
-            } else if (nemo.hasShield) {
-              nemo.hasShield = false;
-              nemo.invincibleTimer = 35;
-              sharks.splice(i, 1);
-            } else {
-              gameOver();
-            }
-          }
-
-          if (sk.x < -70) {
-            sharks.splice(i, 1);
-          }
-        }
-
-        nemo.update();
-        nemo.draw();
-        drawScore(lvlInfo);
-        drawLevelNotice(lvlInfo);
-
-      } else if (gameState === 'GAMEOVER') {
-        obstacles.forEach(ob => ob.draw());
-        shieldItems.forEach(item => item.draw());
-        jellyfishes.forEach(jf => jf.draw());
-        sharks.forEach(sk => sk.draw());
-        nemo.draw();
-        drawUIGameOver(lvlInfo);
-      }
-    }
-
-    requestAnimationFrame(loop);
-  }
-
-  function drawScore(lvlInfo) {
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 38px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 6;
-    ctx.fillText(score, GAME_WIDTH / 2, isLandscape ? 50 : 70);
-
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillStyle = '#ffca28';
-    ctx.fillText(`${lvlInfo.title}`, GAME_WIDTH / 2, isLandscape ? 75 : 100);
-    ctx.shadowBlur = 0;
-  }
-
-  function drawLevelNotice(lvlInfo) {
-    if (levelNoticeTimer > 0) {
-      levelNoticeTimer--;
-      const alpha = Math.min(1, levelNoticeTimer / 30);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-
-      ctx.fillStyle = 'rgba(255, 193, 7, 0.25)';
-      ctx.fillRect(0, GAME_HEIGHT / 2 - 40, GAME_WIDTH, 70);
-
-      ctx.fillStyle = '#ffeb3b';
-      ctx.font = 'bold 24px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.shadowBlur = 8;
-
-      let subText = "기둥 5개 통과! 다음 레벨 진입!";
-      if (score % 5 === 0 && score > 0) {
-        subText = `🔥 기둥 ${score}개 통과! (속도 +0.5 & 구멍 -10px)`;
-      }
-
-      ctx.fillText(`LEVEL UP! ${lvlInfo.title}`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
-      ctx.font = '14px sans-serif';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(subText, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 22);
-
-      ctx.restore();
-    }
-  }
-
-  function drawUIStart() {
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 30px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText("니모의 버블 탈출", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 65 : 95));
-
-    ctx.font = '16px sans-serif';
-    ctx.fillStyle = '#ffca28';
-    ctx.fillText("화면을 터치해서 시작하세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 30 : 55));
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.font = '14px sans-serif';
-    ctx.fillText("⭐ 5개 통과마다 속도 +0.5 / 7개마다 🛡️방어막 버블", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 40 : 65));
-
-    ctx.fillStyle = '#ff80ab';
-    ctx.font = '13px sans-serif';
-    ctx.fillText("🪼 10개 통과시 해파리 / 🦈 15개 통과시 쾌속 상어 등장", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 65 : 95));
-  }
-
-  function drawUIGameOver(lvlInfo) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-    ctx.fillStyle = '#ff5252';
-    ctx.font = 'bold 34px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText("GAME OVER", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 45 : 60));
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '20px sans-serif';
-    ctx.fillText(`최종 점수: ${score} (${lvlInfo.title})`, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 5);
-    ctx.fillText(`최고 기록: ${highScore}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 25);
-
-    ctx.fillStyle = '#ffeb3b';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillText("화면을 터치하여 다시 시작", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 65 : 85));
-  }
-
-  requestAnimationFrame(loop);
-</script>
+    buildKeyboard();
+  </script>
 </body>
 </html>
