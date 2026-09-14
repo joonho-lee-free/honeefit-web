@@ -212,7 +212,7 @@
     <div class="game-card" onclick="launchGame('nemo')">
       <div class="game-icon-wrapper">🐠</div>
       <div class="game-name">니모 탈출</div>
-      <div class="game-tag">5점 레벨업 & 5단계 가속</div>
+      <div class="game-tag">5레벨마다 가속 & 해파리·상어 등장!</div>
       <button class="game-play-btn">게임 시작 ▶</button>
     </div>
 
@@ -257,7 +257,7 @@
 
   function getLevelInfo(s) {
     const lvl = Math.floor(s / 5) + 1;
-    const tier = Math.floor(lvl / 5);
+    const tier = Math.floor((lvl - 1) / 5);
     let title = `LV.${lvl}`;
     if (tier === 0) title = `LV.${lvl} (초급)`;
     else if (tier === 1) title = `LV.${lvl} (중급)`;
@@ -432,6 +432,8 @@
       updateDimensions();
 
       obstacles.length = 0;
+      jellyfishes.length = 0;
+      sharks.length = 0;
       score = 0;
       frames = 0;
       lastLevel = 1;
@@ -545,6 +547,187 @@
     }
   }
 
+  const jellyfishes = [];
+
+  class Jellyfish {
+    constructor() {
+      this.x = GAME_WIDTH + 30;
+      this.baseY = Math.random() * (GAME_HEIGHT - 140) + 70;
+      this.y = this.baseY;
+      this.radius = 16;
+      this.hitRadius = 12;
+      this.speed = Math.random() * 0.4 + 1.1;
+      this.bobOffset = Math.random() * Math.PI * 2;
+      this.bobSpeed = 0.04 + Math.random() * 0.02;
+    }
+
+    update(baseSpeed) {
+      this.x -= baseSpeed * 0.85 + this.speed;
+      this.y = this.baseY + Math.sin(frames * this.bobSpeed + this.bobOffset) * 20;
+    }
+
+    draw() {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+
+      ctx.shadowColor = 'rgba(255, 105, 180, 0.8)';
+      ctx.shadowBlur = 12;
+
+      // 갓 (Dome)
+      ctx.fillStyle = 'rgba(255, 120, 195, 0.85)';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius, Math.PI, 0, false);
+      ctx.quadraticCurveTo(0, 4, -this.radius, 0);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 갓 내 하이라이트
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.beginPath();
+      ctx.arc(-4, -6, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 촉수
+      const wave = Math.sin(frames * 0.15 + this.bobOffset) * 4;
+      ctx.strokeStyle = 'rgba(255, 192, 203, 0.9)';
+      ctx.lineWidth = 2.0;
+
+      for (let i = -3; i <= 3; i += 2) {
+        ctx.beginPath();
+        ctx.moveTo(i * 3, 2);
+        ctx.quadraticCurveTo(i * 4 + wave, 12, i * 3 - wave, 22);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    hits(fish) {
+      const dx = fish.x - this.x;
+      const dy = fish.y - this.y;
+      const dist = Math.hypot(dx, dy);
+      return dist < (fish.hitRadius + this.hitRadius);
+    }
+  }
+
+  const sharks = [];
+
+  class Shark {
+    constructor() {
+      this.x = GAME_WIDTH + 60;
+      this.y = Math.random() * (GAME_HEIGHT - 160) + 80;
+      this.width = 52;
+      this.height = 24;
+      this.hitRadius = 14;
+      this.warningTimer = 55;
+      this.speed = isLandscape ? 4.2 : 3.6;
+      this.active = false;
+    }
+
+    update(baseSpeed) {
+      if (this.warningTimer > 0) {
+        this.warningTimer--;
+        if (this.warningTimer === 0) {
+          this.active = true;
+        }
+      } else {
+        this.x -= baseSpeed + this.speed;
+      }
+    }
+
+    draw() {
+      ctx.save();
+
+      if (this.warningTimer > 0) {
+        const alpha = Math.floor(frames / 6) % 2 === 0 ? 1 : 0.3;
+        ctx.globalAlpha = alpha;
+
+        ctx.fillStyle = '#ff1744';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('⚠️ 🦈', GAME_WIDTH - 10, this.y + 6);
+
+        ctx.strokeStyle = 'rgba(255, 23, 68, 0.6)';
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, this.y);
+        ctx.lineTo(GAME_WIDTH, this.y);
+        ctx.stroke();
+      } else {
+        ctx.translate(this.x, this.y);
+
+        ctx.shadowColor = 'rgba(0, 229, 255, 0.6)';
+        ctx.shadowBlur = 10;
+
+        const tailWiggle = Math.sin(frames * 0.35) * 4;
+
+        ctx.fillStyle = '#37474f';
+        ctx.beginPath();
+        ctx.moveTo(20, 0);
+        ctx.lineTo(34, -14 + tailWiggle);
+        ctx.lineTo(28, 0);
+        ctx.lineTo(34, 14 + tailWiggle);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#455a64';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 25, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#263238';
+        ctx.beginPath();
+        ctx.moveTo(-2, -10);
+        ctx.lineTo(-12, -22);
+        ctx.lineTo(8, -10);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#cfd8dc';
+        ctx.beginPath();
+        ctx.ellipse(0, 3, 20, 7, 0, 0, Math.PI);
+        ctx.fill();
+
+        ctx.fillStyle = '#ff1744';
+        ctx.beginPath();
+        ctx.arc(-14, -3, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-15, -4, 1, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-20, 2);
+        ctx.lineTo(-24, 5);
+        ctx.lineTo(-18, 5);
+        ctx.lineTo(-22, 8);
+        ctx.lineTo(-16, 4);
+        ctx.fill();
+
+        ctx.strokeStyle = '#263238';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    hits(fish) {
+      if (!this.active) return false;
+      const dx = fish.x - this.x;
+      const dy = fish.y - this.y;
+      const dist = Math.hypot(dx, dy);
+      return dist < (fish.hitRadius + this.hitRadius);
+    }
+  }
+
   const bgParticles = Array.from({ length: 30 }, () => ({
     x: Math.random() * 800,
     y: Math.random() * 700,
@@ -578,6 +761,8 @@
       nemo.flap();
     } else if (gameState === 'GAMEOVER') {
       obstacles.length = 0;
+      jellyfishes.length = 0;
+      sharks.length = 0;
       score = 0;
       frames = 0;
       lastLevel = 1;
@@ -660,6 +845,44 @@
           }
         }
 
+        // 해파리 스폰 및 업데이트 (3레벨부터)
+        if (lvlInfo.level >= 3 && frames % 220 === 0 && jellyfishes.length < 3) {
+          jellyfishes.push(new Jellyfish());
+        }
+
+        for (let i = jellyfishes.length - 1; i >= 0; i--) {
+          const jf = jellyfishes[i];
+          jf.update(currentSpeed);
+          jf.draw();
+
+          if (jf.hits(nemo)) {
+            gameOver();
+          }
+
+          if (jf.x < -40) {
+            jellyfishes.splice(i, 1);
+          }
+        }
+
+        // 상어 스폰 및 업데이트 (5레벨부터)
+        if (lvlInfo.level >= 5 && frames % 360 === 0 && sharks.length < 2) {
+          sharks.push(new Shark());
+        }
+
+        for (let i = sharks.length - 1; i >= 0; i--) {
+          const sk = sharks[i];
+          sk.update(currentSpeed);
+          sk.draw();
+
+          if (sk.hits(nemo)) {
+            gameOver();
+          }
+
+          if (sk.x < -70) {
+            sharks.splice(i, 1);
+          }
+        }
+
         nemo.update();
         nemo.draw();
         drawScore(lvlInfo);
@@ -667,6 +890,8 @@
 
       } else if (gameState === 'GAMEOVER') {
         obstacles.forEach(ob => ob.draw());
+        jellyfishes.forEach(jf => jf.draw());
+        sharks.forEach(sk => sk.draw());
         nemo.draw();
         drawUIGameOver(lvlInfo);
       }
@@ -706,7 +931,7 @@
       ctx.shadowBlur = 8;
 
       let subText = "5점 달성! 다음 레벨 진입!";
-      if (lvlInfo.level % 5 === 0) {
+      if ((lvlInfo.level - 1) % 5 === 0 && lvlInfo.level > 1) {
         subText = "🔥 난이도 가속 구간! (속도 +0.5 & 구멍 -10px)";
       }
 
@@ -723,19 +948,19 @@
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 30px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText("니모의 버블 탈출", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 60 : 90));
+    ctx.fillText("니모의 버블 탈출", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 65 : 95));
 
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#ffca28';
-    ctx.fillText("화면을 터치해서 시작하세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 25 : 50));
+    ctx.fillText("화면을 터치해서 시작하세요!", GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isLandscape ? 30 : 55));
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.font = '14px sans-serif';
-    ctx.fillText("⭐ 5점마다 레벨 UP! (5레벨마다 속도 +0.5 / 구멍 -10px)", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 50 : 80));
+    ctx.fillText("⭐ 5레벨 경과마다 제한없이 속도 +0.5 가속!", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 40 : 65));
 
-    ctx.fillStyle = 'rgba(200, 230, 255, 0.75)';
+    ctx.fillStyle = '#ff80ab';
     ctx.font = '13px sans-serif';
-    ctx.fillText("기둥 좌우 간격(270px)은 언제나 일정하게 유지됩니다", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 75 : 105));
+    ctx.fillText("🪼 3LV부터 해파리 / 🦈 5LV부터 쾌속 상어 경고 출현", GAME_WIDTH / 2, GAME_HEIGHT / 2 + (isLandscape ? 65 : 95));
   }
 
   function drawUIGameOver(lvlInfo) {
