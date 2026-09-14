@@ -528,7 +528,7 @@
       if (isFree) {
         progressWrap.style.display = 'none';
         document.getElementById('target-title').textContent = '자유 연주 모드';
-        document.getElementById('target-note').textContent = activePressedNote ? `${NOTE_NAMES_KO[activePressedNote]} (${activePressedNote})` : '자유 연주 🎵';
+        document.getElementById('target-note').textContent = activePressedNote ? `${NOTE_NAMES_KO[activePressedNote]} (${activePressedNote})` : '';
         renderFullStave(null, hand, activePressedNote);
         clearTargetHighlight();
         return;
@@ -696,7 +696,7 @@
           activePressedNote = null;
           const hand = currentMode ? (currentMode.hand || 'rh') : 'rh';
           if (currentMode && currentMode.isFree) {
-            document.getElementById('target-note').textContent = '자유 연주 🎵';
+            document.getElementById('target-note').textContent = '';
             renderFullStave(null, hand, null);
           } else if (currentMode) {
             const expectedNote = currentMode.notes[currentStepIndex];
